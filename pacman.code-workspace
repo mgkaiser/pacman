@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"cc65vice.viceDirectory": "C:\\C64\\GTK3VICE-3.4-win64-r39109\\bin\\",
+		"cc65vice.disableMetrics": true
+	}
+}
