@@ -7,6 +7,8 @@ struct actor {
     unsigned char dy;
     unsigned char animationDelay;
     unsigned char animationDelayMax;
+    unsigned char moveDelay;
+    unsigned char moveDelayMax;
     unsigned char frame;
     unsigned char frames;               
     unsigned char *framedata;

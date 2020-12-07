@@ -131,30 +131,40 @@ void initActors(void)
     actor_Ghost1.frame = 0;    
     actor_Ghost1.animationDelay = 0;
     actor_Ghost1.animationDelayMax = 8;
+    actor_Ghost1.moveDelay = 0;
+    actor_Ghost1.moveDelayMax = 255;
 
     actor_Ghost2.spriteNumber = 1;
     actor_Ghost2.frames = GHOST_FRAMES;
     actor_Ghost2.frame = 0;    
     actor_Ghost2.animationDelay = 0;
     actor_Ghost2.animationDelayMax = 8;
+    actor_Ghost2.moveDelay = 0;
+    actor_Ghost2.moveDelayMax = 240;
 
     actor_Ghost3.spriteNumber = 2;
     actor_Ghost3.frames = GHOST_FRAMES;
     actor_Ghost3.frame = 0;    
     actor_Ghost3.animationDelay = 0;
     actor_Ghost3.animationDelayMax = 8;
+    actor_Ghost3.moveDelay = 0;
+    actor_Ghost3.moveDelayMax = 240;
 
     actor_Ghost4.spriteNumber = 3;
     actor_Ghost4.frames = GHOST_FRAMES;
     actor_Ghost4.frame = 0;    
     actor_Ghost4.animationDelay = 0;
     actor_Ghost4.animationDelayMax = 8;
+    actor_Ghost4.moveDelay = 0;
+    actor_Ghost4.moveDelayMax = 220;
 
     actor_Player.spriteNumber = 4;
     actor_Player.frames = PLAYER_FRAMES;
     actor_Player.frame = 0;    
     actor_Player.animationDelay = 0;
     actor_Player.animationDelayMax = 6;
+    actor_Player.moveDelay = 0;
+    actor_Player.moveDelayMax = 250;
 }
 
 // Setup the video chip

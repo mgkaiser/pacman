@@ -120,134 +120,141 @@ void renderActor(register struct actor *pActor)
 void moveActorGhost(register struct actor *pActor, unsigned char aggressivex, unsigned char aggressivey)
 {
     unsigned char screenx;
-    unsigned char screeny;    
+    unsigned char screeny;  
 
-    pActor->x += pActor->dx;
-    pActor->y += pActor->dy;
+    if (pActor->moveDelayMax == 255 || pActor -> moveDelay != 0)
+    {
+  
+        pActor->x += pActor->dx;
+        pActor->y += pActor->dy;
 
-    if (pActor->dx != 0)
-    {        
-        screenx = spritexToscreenx (pActor->x);
-        screeny = spriteyToscreeny (pActor->y);
-        if (screenxTospritex(screenx) == pActor->x)
-        {
-            if (isBlocked(screenx + pActor->dx, screeny ))
+        if (pActor->dx != 0)
+        {        
+            screenx = spritexToscreenx (pActor->x);
+            screeny = spriteyToscreeny (pActor->y);
+            if (screenxTospritex(screenx) == pActor->x)
             {
-                // Stop X motion
-                pActor->dx = 0;
-
-                // The player is above us
-                if ((aggressivey == 1  && actor_Player.y < pActor->y) || (aggressivey == 0 && actor_Player.y > pActor->y ))
+                if (isBlocked(screenx + pActor->dx, screeny ))
                 {
-                    // Go Up                    
-                    if (!isBlocked(screenx, screeny - 1 ))
-                    {
-                        pActor->dy = -1;
-                    }
-                    // If that's blocked go the other way
-                    else if (!isBlocked(screenx, screeny + 1 ))
-                    {
-                        pActor->dy = 1;                                                
-                    }                                                          
-                }
+                    // Stop X motion
+                    pActor->dx = 0;
 
-                // The player is below us
+                    // The player is above us
+                    if ((aggressivey == 1  && actor_Player.y < pActor->y) || (aggressivey == 0 && actor_Player.y > pActor->y ))
+                    {
+                        // Go Up                    
+                        if (!isBlocked(screenx, screeny - 1 ))
+                        {
+                            pActor->dy = -1;
+                        }
+                        // If that's blocked go the other way
+                        else if (!isBlocked(screenx, screeny + 1 ))
+                        {
+                            pActor->dy = 1;                                                
+                        }                                                          
+                    }
+
+                    // The player is below us
+                    else
+                    {
+                        // Go Down                    
+                        if (!isBlocked(screenx, screeny + 1 ))
+                        {
+                            pActor->dy = 1;
+                        }
+                        // If that's blocked go the other way                
+                        else if (!isBlocked(screenx, screeny - 1 ))
+                        {
+                            pActor->dy = -1;
+                        }                                 
+                    }                
+                }  
                 else
                 {
-                    // Go Down                    
-                    if (!isBlocked(screenx, screeny + 1 ))
+                    if (aggressivex && ghostDoorOpen==0)
                     {
-                        pActor->dy = 1;
+                        // Look up and down to see if we can get closer to  player                
+                        if (!isBlocked(screenx, screeny - 1) && actor_Player.y < pActor->y)
+                        {
+                            pActor->dy = -1;                    
+                            pActor->dx = 0;                    
+                        } 
+                        else if (!isBlocked(screenx, screeny + 1) && actor_Player.y > pActor->y)
+                        {
+                            pActor->dy = 1;                    
+                            pActor->dx = 0;                    
+                        }                 
                     }
-                    // If that's blocked go the other way                
-                    else if (!isBlocked(screenx, screeny - 1 ))
-                    {
-                        pActor->dy = -1;
-                    }                                 
-                }                
-            }  
-            else
+                }                                  
+            }                    
+        }
+
+        else if (pActor->dy != 0)
+        {        
+            screenx = spritexToscreenx (pActor->x);
+            screeny = spriteyToscreeny (pActor->y);    
+            if (screenyTospritey(screeny) == pActor->y)
             {
-                if (aggressivex && ghostDoorOpen==0)
+                if (isBlocked(screenx, screeny + pActor->dy ))
                 {
-                    // Look up and down to see if we can get closer to  player                
-                    if (!isBlocked(screenx, screeny - 1) && actor_Player.y < pActor->y)
+                    // Stop Y motion
+                    pActor->dy = 0;
+
+                    // The player is to our left
+                    if ((aggressivex == 1  && actor_Player.x < pActor->x) || (aggressivex == 0 && actor_Player.x > pActor->x ))
                     {
-                        pActor->dy = -1;                    
-                        pActor->dx = 0;                    
-                    } 
-                    else if (!isBlocked(screenx, screeny + 1) && actor_Player.y > pActor->y)
-                    {
-                        pActor->dy = 1;                    
-                        pActor->dx = 0;                    
-                    }                 
+                        // Go left                    
+                        if (!isBlocked(screenx - 1, screeny ))
+                        {
+                            pActor->dx = -1;                        
+                        }
+                        // If that's blocked go the other way
+                        else if (!isBlocked(screenx + 1, screeny ))
+                        {
+                            pActor->dx = 1;                                                         
+                        }                                      
+                    }
+
+                    // The player is to our right
+                    else
+                    {       
+                        
+                        if (!isBlocked(screenx + 1, screeny ) )
+                        {
+                            pActor->dx = 1;                        
+                        }
+                        // If that's blocked go the other way                
+                        else if (!isBlocked(screenx -1 , screeny))
+                        {
+                            pActor->dx = -1;                        
+                        }                            
+                    }
                 }
-            }                                  
-        }                    
+                else
+                {
+                    if (aggressivey && ghostDoorOpen==0)
+                    {
+                        // Look left and right to see if we can get closer to player                
+                        if (!isBlocked(screenx - 1, screeny) && actor_Player.x < pActor->x)
+                        {
+                            pActor->dy = 0;                    
+                            pActor->dx = -1;                    
+                        } 
+                        else if (!isBlocked(screenx + 1, screeny) && actor_Player.x > pActor->x)
+                        {
+                            pActor->dy = 0;                    
+                            pActor->dx = 1;                    
+                        }
+                    }                 
+                }            
+            }            
+        }    
+        
+        pActor->framedata = LookTowardPlayer(pActor->x, pActor-> y);
     }
 
-    else if (pActor->dy != 0)
-    {        
-        screenx = spritexToscreenx (pActor->x);
-        screeny = spriteyToscreeny (pActor->y);    
-        if (screenyTospritey(screeny) == pActor->y)
-        {
-            if (isBlocked(screenx, screeny + pActor->dy ))
-            {
-                // Stop Y motion
-                pActor->dy = 0;
-
-                // The player is to our left
-                if ((aggressivex == 1  && actor_Player.x < pActor->x) || (aggressivex == 0 && actor_Player.x > pActor->x ))
-                {
-                    // Go left                    
-                    if (!isBlocked(screenx - 1, screeny ))
-                    {
-                        pActor->dx = -1;                        
-                    }
-                    // If that's blocked go the other way
-                    else if (!isBlocked(screenx + 1, screeny ))
-                    {
-                        pActor->dx = 1;                                                         
-                    }                                      
-                }
-
-                // The player is to our right
-                else
-                {       
-                    
-                    if (!isBlocked(screenx + 1, screeny ) )
-                    {
-                        pActor->dx = 1;                        
-                    }
-                    // If that's blocked go the other way                
-                    else if (!isBlocked(screenx -1 , screeny))
-                    {
-                        pActor->dx = -1;                        
-                    }                            
-                }
-            }
-            else
-            {
-                if (aggressivey && ghostDoorOpen==0)
-                {
-                    // Look left and right to see if we can get closer to player                
-                    if (!isBlocked(screenx - 1, screeny) && actor_Player.x < pActor->x)
-                    {
-                        pActor->dy = 0;                    
-                        pActor->dx = -1;                    
-                    } 
-                    else if (!isBlocked(screenx + 1, screeny) && actor_Player.x > pActor->x)
-                    {
-                        pActor->dy = 0;                    
-                        pActor->dx = 1;                    
-                    }
-                }                 
-            }            
-        }            
-    }    
-    
-    pActor->framedata = LookTowardPlayer(pActor->x, pActor-> y);
+    --pActor->moveDelay;
+    if (pActor->moveDelay == 0) pActor->moveDelay = pActor->moveDelayMax;
 }
 
 // Move the actor in the selected direction unless blocked
@@ -257,74 +264,81 @@ void moveActorPlayer(register struct actor *pActor)
     unsigned char screeny;  
     unsigned char xaligned;
     unsigned char yaligned;
-
-    // Act upon the last valid movement
-    pActor->x += pActor->dx;
-    pActor->y += pActor->dy;  
-
-    // What are the screen coords?
-    screenx = spritexToscreenx (pActor->x);
-    screeny = spriteyToscreeny (pActor->y);    
-
-    // Are we aligned
-    xaligned = (screenxTospritex(screenx) == pActor->x);
-    yaligned = (screenyTospritey(screeny) == pActor->y);    
-
-    // Make sure we didn't hit a wall in the X direction
-    if ((pActor->dx != 0) && xaligned)
-    {                    
-        if (isBlocked(screenx + pActor->dx, screeny ))
-        {
-            // Stop and wait for the player to tell you what to do next
-            pActor->dx = 0;                
-            pActor->framedata = (char*)&animation_player_still;  
-        }                                                          
-    }
-
-    // Make sure we didn't hit a wall in the Y direction
-    else if ((pActor->dy != 0) && yaligned)
-    {                        
-        if (isBlocked(screenx, screeny + pActor->dy ))
-        {
-            // Stop and wait for the player to tell you what to do next
-            pActor->dy = 0;
-            pActor->framedata = (char*)&animation_player_still;  
-        }                                                  
-    }    
-
-    // Only accept joystick input when fully alligned
-    if (xaligned && yaligned)
+        
+    if (pActor->moveDelayMax == 255 || pActor -> moveDelay != 0)
     {
-        // Joystick left
-        if (!(CIA1.pra & 4) && (!isBlocked(screenx - 1, screeny)))
-        {
-            pActor->dy = 0;
-            pActor->dx = -1;
-            pActor->framedata = (char*)&animation_player_left;  
-        }
-        // Joystick right
-        else if (!(CIA1.pra & 8) && (!isBlocked(screenx + 1, screeny)))
-        {
-            pActor->dy = 0;
-            pActor->dx = 1;
-            pActor->framedata = (char*)&animation_player_right;  
+
+        // Act upon the last valid movement
+        pActor->x += pActor->dx;
+        pActor->y += pActor->dy;  
+
+        // What are the screen coords?
+        screenx = spritexToscreenx (pActor->x);
+        screeny = spriteyToscreeny (pActor->y);    
+
+        // Are we aligned
+        xaligned = (screenxTospritex(screenx) == pActor->x);
+        yaligned = (screenyTospritey(screeny) == pActor->y);    
+
+        // Make sure we didn't hit a wall in the X direction
+        if ((pActor->dx != 0) && xaligned)
+        {                    
+            if (isBlocked(screenx + pActor->dx, screeny ))
+            {
+                // Stop and wait for the player to tell you what to do next
+                pActor->dx = 0;                
+                pActor->framedata = (char*)&animation_player_still;  
+            }                                                          
         }
 
-        // Joystick up
-        else if (!(CIA1.pra & 1) && (!isBlocked(screenx, screeny - 1 )))
+        // Make sure we didn't hit a wall in the Y direction
+        else if ((pActor->dy != 0) && yaligned)
+        {                        
+            if (isBlocked(screenx, screeny + pActor->dy ))
+            {
+                // Stop and wait for the player to tell you what to do next
+                pActor->dy = 0;
+                pActor->framedata = (char*)&animation_player_still;  
+            }                                                  
+        }    
+
+        // Only accept joystick input when fully alligned
+        if (xaligned && yaligned)
         {
-            pActor->dy = -1;
-            pActor->dx = 0;
-            pActor->framedata = (char*)&animation_player_up;  
-        }
-        // Joystick down
-        else if (!(CIA1.pra & 2) && (!isBlocked(screenx, screeny + 1)))
-        {
-            pActor->dy = 1;
-            pActor->dx = 0;
-            pActor->framedata = (char*)&animation_player_down;  
+            // Joystick left
+            if (!(CIA1.pra & 4) && (!isBlocked(screenx - 1, screeny)))
+            {
+                pActor->dy = 0;
+                pActor->dx = -1;
+                pActor->framedata = (char*)&animation_player_left;  
+            }
+            // Joystick right
+            else if (!(CIA1.pra & 8) && (!isBlocked(screenx + 1, screeny)))
+            {
+                pActor->dy = 0;
+                pActor->dx = 1;
+                pActor->framedata = (char*)&animation_player_right;  
+            }
+
+            // Joystick up
+            else if (!(CIA1.pra & 1) && (!isBlocked(screenx, screeny - 1 )))
+            {
+                pActor->dy = -1;
+                pActor->dx = 0;
+                pActor->framedata = (char*)&animation_player_up;  
+            }
+            // Joystick down
+            else if (!(CIA1.pra & 2) && (!isBlocked(screenx, screeny + 1)))
+            {
+                pActor->dy = 1;
+                pActor->dx = 0;
+                pActor->framedata = (char*)&animation_player_down;  
+            }
         }
     }
+
+    --pActor->moveDelay;
+    if (pActor->moveDelay == 0) pActor->moveDelay = pActor->moveDelayMax;
 }
 
 // Did we eat a dot?
