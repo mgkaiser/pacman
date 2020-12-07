@@ -10,7 +10,9 @@ struct actor {
     unsigned char moveDelay;
     unsigned char moveDelayMax;
     unsigned char frame;
-    unsigned char frames;               
+    unsigned char frames; 
+    unsigned char ghostDoorOpen;              
+    unsigned char suppressAggression;
     unsigned char *framedata;
 };
 

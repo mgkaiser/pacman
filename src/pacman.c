@@ -38,16 +38,10 @@ char *spriteSlot    = (char *)0xbbf8;
 // Counter that increments every frame
 unsigned char interuptCounter;
 
-// Flag that defines if the ghost door is open
-unsigned char ghostDoorOpen;
-
-unsigned char rasterLine;
-
 // Interrupt handler called once per frame
 unsigned char interrupt(void)
 {             
-    interuptCounter++;
-    if (ghostDoorOpen > 0) ghostDoorOpen--;
+    interuptCounter++;    
 
     // Draw the ghosts
     renderActor(&actor_Player);
@@ -77,8 +71,7 @@ void initInterrupt (void)
 {
     unsigned short dummy;     
 
-    interuptCounter = 0;
-    ghostDoorOpen = 0xff;
+    interuptCounter = 0;    
     
     SEI();    
     CIA1.icr = 0x7F;                                // Turn of CIA timer
@@ -135,6 +128,7 @@ void initActors(void)
     actor_Ghost1.animationDelayMax = 8;
     actor_Ghost1.moveDelay = 0;
     actor_Ghost1.moveDelayMax = 255;
+    actor_Ghost1.ghostDoorOpen = 0;
 
     actor_Ghost2.spriteNumber = 1;
     actor_Ghost2.frames = GHOST_FRAMES;
@@ -143,6 +137,7 @@ void initActors(void)
     actor_Ghost2.animationDelayMax = 8;
     actor_Ghost2.moveDelay = 0;
     actor_Ghost2.moveDelayMax = 240;
+    actor_Ghost2.ghostDoorOpen = 100;
 
     actor_Ghost3.spriteNumber = 2;
     actor_Ghost3.frames = GHOST_FRAMES;
@@ -151,6 +146,7 @@ void initActors(void)
     actor_Ghost3.animationDelayMax = 8;
     actor_Ghost3.moveDelay = 0;
     actor_Ghost3.moveDelayMax = 240;
+    actor_Ghost3.ghostDoorOpen = 150;
 
     actor_Ghost4.spriteNumber = 3;
     actor_Ghost4.frames = GHOST_FRAMES;
@@ -159,6 +155,7 @@ void initActors(void)
     actor_Ghost4.animationDelayMax = 8;
     actor_Ghost4.moveDelay = 0;
     actor_Ghost4.moveDelayMax = 220;
+    actor_Ghost4.ghostDoorOpen = 200;
 
     actor_Player.spriteNumber = 4;
     actor_Player.frames = PLAYER_FRAMES;
@@ -166,7 +163,7 @@ void initActors(void)
     actor_Player.animationDelay = 0;
     actor_Player.animationDelayMax = 6;
     actor_Player.moveDelay = 0;
-    actor_Player.moveDelayMax = 250;
+    actor_Player.moveDelayMax = 250;    
 }
 
 // Setup the video chip
@@ -213,7 +210,7 @@ void initGhosts(void)
     // Ghost 2 (Pink) Initial Postion, in the box
     VIC.spr1_color = COLOR_LIGHTRED;
     actor_Ghost2.x = 0x89;
-    actor_Ghost2.y = 0x77;   
+    actor_Ghost2.y = 0x87;   
     actor_Ghost2.dx = 0;
     actor_Ghost2.dy = -1;     
     actor_Ghost2.framedata = (char*)&animation_ghost_right_up;    
@@ -221,9 +218,9 @@ void initGhosts(void)
     // Ghost 3 (Orange) Initial Postion, in the box
     VIC.spr2_color = COLOR_ORANGE;
     actor_Ghost3.x = 0x79;
-    actor_Ghost3.y = 0x77;   
+    actor_Ghost3.y = 0x87;   
     actor_Ghost3.dx = 0;
-    actor_Ghost3.dy = 1;     
+    actor_Ghost3.dy = -1;     
     actor_Ghost3.framedata = (char*)&animation_ghost_left_down;    
 
     // Ghost 4 (Cyan) Initial Postion, in the box

@@ -1,6 +1,5 @@
 extern char *spriteSlot;
 extern char *screenData;
-extern unsigned char ghostDoorOpen;
 
 extern unsigned char animation_ghost_left_up[];
 extern unsigned char animation_ghost_right_up[];
