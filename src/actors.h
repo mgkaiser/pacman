@@ -31,8 +31,7 @@ extern struct actor actor_Ghost3;
 extern struct actor actor_Ghost4;
 extern struct actor actor_Player;
 
-extern void renderActor(struct actor *Actor);
-extern void moveActorGhost(struct actor *pActor, unsigned char aggressivex, unsigned char aggressivey);
-extern void moveActorPlayer(struct actor *pActor);
-extern void checkActorGhost(struct actor *pActor, unsigned char aggressivex, unsigned char aggressivey);
-extern void checkActorPlayer(struct actor *pActor);
+extern void renderActor(register struct actor *Actor);
+extern void moveActorGhost(register struct actor *pActor, unsigned char aggressivex, unsigned char aggressivey);
+extern void moveActorPlayer(register struct actor *pActor);
+extern void checkActorPlayer(register struct actor *pActor);

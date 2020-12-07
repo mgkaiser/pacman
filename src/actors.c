@@ -2,17 +2,21 @@
 #include "actors.h"
 #include "pacman.h"
 
+// Describes the ghost animations
 unsigned char animation_ghost_left_up[]     = { 0x80, 0x84 };
 unsigned char animation_ghost_right_up[]    = { 0x81, 0x85 };
 unsigned char animation_ghost_left_down[]   = { 0x82, 0x86 };
 unsigned char animation_ghost_right_down[]  = { 0x83, 0x87 };
 
+// Describes the player animations
 unsigned char animation_player_right[]      = { 0x88, 0x89, 0x8a, 0x89 };
 unsigned char animation_player_down[]       = { 0x88, 0x8d, 0x8e, 0x8d };
 unsigned char animation_player_up[]         = { 0x88, 0x8b, 0x8c, 0x8b };
 unsigned char animation_player_left[]       = { 0x88, 0x8f, 0x90, 0x8f };
 unsigned char animation_player_still[]      = { 0x88, 0x88, 0x88, 0x88 };
+unsigned char animation_player_die[]      = { 0x88, 0x88, 0x88, 0x88 };
 
+// The actors
 struct actor actor_Ghost1;
 struct actor actor_Ghost2;
 struct actor actor_Ghost3;
@@ -61,25 +65,6 @@ unsigned char isBlocked(unsigned char screenx, unsigned char screeny)
     return 1;
 }
 
-// Take the data from the struct and actually draw the actor
-void renderActor(struct actor *pActor)
-{   
-    int spriteNumber;
-    
-    spriteNumber = pActor->spriteNumber;
-
-    VIC.spr_pos[spriteNumber].x = pActor->x;
-    VIC.spr_pos[spriteNumber].y = pActor->y;
-
-    if (pActor->animationDelay-- == 0)
-    {
-        spriteSlot[spriteNumber] = *(pActor->framedata + pActor->frame);              
-        pActor->frame++;
-        if (pActor->frame >= pActor->frames) pActor->frame = 0;
-        pActor->animationDelay = pActor->animationDelayMax;
-    }
-}
-
 // Make the ghosts look at the player
 unsigned char *LookTowardPlayer(unsigned char x, unsigned char y)
 {
@@ -112,8 +97,27 @@ unsigned char *LookTowardPlayer(unsigned char x, unsigned char y)
     
 }
 
+// Take the data from the struct and actually draw the actor
+void renderActor(register struct actor *pActor)
+{   
+    int spriteNumber;
+    
+    spriteNumber = pActor->spriteNumber;
+
+    VIC.spr_pos[spriteNumber].x = pActor->x;
+    VIC.spr_pos[spriteNumber].y = pActor->y;
+
+    if (pActor->animationDelay-- == 0)
+    {
+        spriteSlot[spriteNumber] = *(pActor->framedata + pActor->frame);              
+        pActor->frame++;
+        if (pActor->frame >= pActor->frames) pActor->frame = 0;
+        pActor->animationDelay = pActor->animationDelayMax;
+    }
+}
+
 // Move the actor in the selected direction unless blocked
-void moveActorGhost(struct actor *pActor, unsigned char aggressivex, unsigned char aggressivey)
+void moveActorGhost(register struct actor *pActor, unsigned char aggressivex, unsigned char aggressivey)
 {
     unsigned char screenx;
     unsigned char screeny;    
@@ -178,8 +182,7 @@ void moveActorGhost(struct actor *pActor, unsigned char aggressivex, unsigned ch
                         pActor->dx = 0;                    
                     }                 
                 }
-            }
-                                  
+            }                                  
         }                    
     }
 
@@ -248,185 +251,74 @@ void moveActorGhost(struct actor *pActor, unsigned char aggressivex, unsigned ch
 }
 
 // Move the actor in the selected direction unless blocked
-void moveActorPlayer(struct actor *pActor)
+void moveActorPlayer(register struct actor *pActor)
 {
     unsigned char screenx;
-    unsigned char screeny;    
+    unsigned char screeny;  
+    unsigned char xaligned;
+    unsigned char yaligned;
+
+    pActor->x += pActor->dx;
+    pActor->y += pActor->dy;  
+
+    screenx = spritexToscreenx (pActor->x);
+    screeny = spriteyToscreeny (pActor->y);    
+
+    xaligned = (screenxTospritex(screenx) == pActor->x);
+    yaligned = (screenyTospritey(screeny) == pActor->y);    
 
     if (pActor->dx != 0)
-    {        
-        screenx = spritexToscreenx (pActor->x);
-        screeny = spriteyToscreeny (pActor->y);
-        if (screenxTospritex(screenx) == pActor->x)
+    {            
+        if (xaligned)
         {
             if (isBlocked(screenx + pActor->dx, screeny ))
             {
                 // Stop and wait for the player to tell you what to do next
-                if (pActor->dx == 1) 
-                {
-                    pActor->dx = -1;                
-                    pActor->framedata = (char*)&animation_player_left;  
-                }
-                else
-                {
-                    pActor->dx = 1 ;
-                    pActor->framedata = (char*)&animation_player_right;                      
-                }
-            }
-            else
-            {                
-                pActor->x += pActor->dx;
-            }            
-        }    
-        else
-        {
-            pActor->x += pActor->dx;
-        }
-        
+                pActor->dx = 0;                
+                pActor->framedata = (char*)&animation_player_still;  
+            }                                      
+        }                    
     }
 
-    if (pActor->dy != 0)
-    {        
-        screenx = spritexToscreenx (pActor->x);
-        screeny = spriteyToscreeny (pActor->y);    
-        if (screenyTospritey(screeny) == pActor->y)
+    else if (pActor->dy != 0)
+    {                
+        if (yaligned)
         {
             if (isBlocked(screenx, screeny + pActor->dy ))
             {
                 // Stop and wait for the player to tell you what to do next
                 pActor->dy = 0;
                 pActor->framedata = (char*)&animation_player_still;  
-            }
-            else
-            {                
-                pActor->y += pActor->dy;    
-            }            
-        }    
-        else
-        {
-            pActor->y += pActor->dy;    
-        }
-    }    
-}
-
-// See if the actor should change direction
-void checkActorGhost(struct actor *pActor, unsigned char aggressivex, unsigned char aggressivey)
-{
-    unsigned char screenx;
-    unsigned char screeny;    
-
-    if (pActor->dy != 0)
-    {        
-        screenx = spritexToscreenx (pActor->x);
-        screeny = spriteyToscreeny (pActor->y);
-        
-        if (!isBlocked(screenx, screeny + pActor->dy))    
-        {
-            if (screenxTospritex(screenx) == pActor->x)
-        {
-            // Player is to the left
-            if (actor_Player.x < pActor->x) 
-            {
-                if (aggressivex)
-                {
-                    // See if we can make a left turn
-                    if (!isBlocked(screenx - 1, screeny))
-                    {
-                        pActor->dy = 0;
-                        pActor->dx = -1;
-                    } 
-                }
-                else
-                {
-                    // See if we can make a right turn
-                    if (!isBlocked(screenx + 1, screeny))
-                    {
-                        pActor->dy = 0;
-                        pActor->dx = 1;
-                    } 
-                }
-                
-            }
-            // Player is to the right
-            else
-            {
-                if (aggressivex)
-                {
-                    // See if we can make a right turn
-                    if (!isBlocked(screenx + 1, screeny))
-                    {
-                        pActor->dy = 0;
-                        pActor->dx = 1;
-                    } 
-                }
-                else
-                {
-                    // See if we can make a left turn
-                    if (!isBlocked(screenx - 1, screeny))
-                    {
-                        pActor->dy = 0;
-                        pActor->dx = -1;
-                    } 
-                }
-            }                        
+            }                                          
         }            
-        }
-    }
+    }    
 
-    if (pActor->dx != 0)
-    {        
-        screenx = spritexToscreenx (pActor->x);
-        screeny = spriteyToscreeny (pActor->y);
-        if (!isBlocked(screenx + pActor->dx, screeny))    
+    if (xaligned && yaligned)
+    {
+        // Joystick left
+        if (!(CIA1.pra & 4) && (!isBlocked(screenx - 1, screeny)))
         {
-            if (screenyTospritey(screeny) == pActor->y)
-        {
-            // Player is above us
-            if (actor_Player.y < pActor->y) 
-            {
-                if (aggressivey)
-                {
-                    // See if we can go up                    
-                    if (!isBlocked(screenx, screeny - 1))
-                    {
-                        pActor->dy = -1;
-                        pActor->dx = 0;
-                    } 
-                }
-                else
-                {
-                    // See if we can go down                    
-                    if (!isBlocked(screenx, screeny + 1))
-                    {
-                        pActor->dy = 1;
-                        pActor->dx = 0;
-                    } 
-                }                                
-            }
-
-            // Player is below us
-            else
-            {
-                if (aggressivey)
-                {                    
-                    // See if we can go down                    
-                    if (!isBlocked(screenx, screeny + 1))
-                    {
-                        pActor->dy = 1;
-                        pActor->dx = 0;
-                    }  
-                }
-                else
-                {
-                    // See if we can go up                    
-                    if (!isBlocked(screenx, screeny - 1))
-                    {
-                        pActor->dy = -1;
-                        pActor->dx = 0;
-                    }   
-                }                    
-            }
+            pActor->dx = -1;
+            pActor->framedata = (char*)&animation_player_left;  
         }
+        // Joystick right
+        else if (!(CIA1.pra & 8) && (!isBlocked(screenx + 1, screeny)))
+        {
+            pActor->dx = 1;
+            pActor->framedata = (char*)&animation_player_right;  
+        }
+
+        // Joystick up
+        else if (!(CIA1.pra & 1) && (!isBlocked(screenx, screeny - 1 )))
+        {
+            pActor->dy = -1;
+            pActor->framedata = (char*)&animation_player_up;  
+        }
+        // Joystick down
+        else if (!(CIA1.pra & 2) && (!isBlocked(screenx, screeny + 1)))
+        {
+            pActor->dy = 1;
+            pActor->framedata = (char*)&animation_player_down;  
         }
     }
 }
@@ -435,7 +327,7 @@ void checkActorGhost(struct actor *pActor, unsigned char aggressivex, unsigned c
 // Did we eat a power pill?
 // Did we hit a ghost?
 // Did we eat fruit?
-void checkActorPlayer(struct actor *pActor)
+void checkActorPlayer(register struct actor *pActor)
 {
 
 }

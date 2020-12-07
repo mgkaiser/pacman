@@ -16,35 +16,48 @@
 #include "actors.h"
 #include "pacman.h"
 
+// Size of stack for the interrupt
 #define STACK_SIZE 16
+// Stack for the interrupt
 unsigned char stackSize[STACK_SIZE];
 
+// First sprite page in our sprite data
 #define SPRITE_BASE 0x80
-char *screenData    = (char *)0xb800;   // 0xe0: "(Address - VICBase ) / 0x40" -> "(0xb800 - 0x8000) / 0x40"
-char *tileData      = (char *)0xb000;   // 0x0c: "(Address - VICBase ) / 0x400" -> "(0xb800 - 0x8000) / 0x400" ** ONLY EVEN ARE VALID **
+
+// Pointer to the screen buffer
+char *screenData    = (char *)0xb800;   
+// Pointer to the custom characters
+char *tileData      = (char *)0xb000; 
+// Pointer to the color buffer  
 char *colorData     = (char *)0xd800;
+// Pointer to the sprite data
 char *spriteData    = (char *)0xa000;
+// Pointer to the sprite slots
 char *spriteSlot    = (char *)0xbbf8;
 
+// Counter that increments every frame
 unsigned char interuptCounter;
+
+// Flag that defines if the ghost door is open
 unsigned char ghostDoorOpen;
+
+// Interrupt handler called once per frame
 unsigned char interrupt(void)
 {                   
     interuptCounter++;
     if (ghostDoorOpen > 0) ghostDoorOpen--;
 
+    // Draw the ghosts
     renderActor(&actor_Player);
     renderActor(&actor_Ghost1);
     renderActor(&actor_Ghost2);
     renderActor(&actor_Ghost3);
     renderActor(&actor_Ghost4);
 
-    //checkActorPlayer(&actor_Player);
-    //checkActorGhost(&actor_Ghost1, 1, 1);
-    //checkActorGhost(&actor_Ghost2, 1, 0);
-    //checkActorGhost(&actor_Ghost3, 0, 1);
-    //checkActorGhost(&actor_Ghost4, 0, 0);       
-
+    // See if the player did anything good
+    checkActorPlayer(&actor_Player);
+    
+    // Check for their next movement
     moveActorPlayer(&actor_Player);
     moveActorGhost(&actor_Ghost1, 1, 1);
     moveActorGhost(&actor_Ghost2, 1, 0);
@@ -57,6 +70,7 @@ unsigned char interrupt(void)
     return IRQ_HANDLED;                         
 }
 
+// Setup the interrupt handler
 void initInterrupt (void)
 {
     unsigned short dummy;     
@@ -75,6 +89,7 @@ void initInterrupt (void)
     CLI();
 }
 
+// Copy the screen data to the buffers
 void copyScreen(void)
 {
     unsigned int x;
@@ -86,6 +101,7 @@ void copyScreen(void)
     }
 }
 
+// Copy the custom characters to the buffers
 void copyChars(void)
 {
     unsigned int x;
@@ -96,6 +112,7 @@ void copyChars(void)
     }
 }
 
+// Copy the sprite data to the buffers
 void copySprites()
 {
     unsigned int x;
@@ -106,7 +123,8 @@ void copySprites()
     }
 }
 
-void initSprites(void)
+// Set the actors to their initial state
+void initActors(void)
 {    
     actor_Ghost1.spriteNumber = 0;
     actor_Ghost1.frames = GHOST_FRAMES;
@@ -139,6 +157,7 @@ void initSprites(void)
     actor_Player.animationDelayMax = 6;
 }
 
+// Setup the video chip
 void initVic(void)
 {
     // Pointer to 0/1, the CPU control register
@@ -158,6 +177,7 @@ void initVic(void)
     VIC.addr = 0xec;
 }
 
+// Set ghosts to initial state
 void initGhosts(void)
 {
     // Enable sprites
@@ -203,6 +223,7 @@ void initGhosts(void)
     actor_Ghost4.framedata = (char*)&animation_ghost_right_down;              
 }
 
+// Set player to initial state
 void initPlayer(void)
 {
     // Player
@@ -214,6 +235,7 @@ void initPlayer(void)
     actor_Player.framedata = (char*)&animation_player_right;
 }
 
+// Main entry point
 int main (void)
 {
     // Copy the graphics to where they belong
@@ -222,7 +244,7 @@ int main (void)
     copySprites();
 
     // Initialize the ghosts and players
-    initSprites();
+    initActors();
     initGhosts();    
     initPlayer();
 
