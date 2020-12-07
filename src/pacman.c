@@ -41,9 +41,11 @@ unsigned char interuptCounter;
 // Flag that defines if the ghost door is open
 unsigned char ghostDoorOpen;
 
+unsigned char rasterLine;
+
 // Interrupt handler called once per frame
 unsigned char interrupt(void)
-{                   
+{             
     interuptCounter++;
     if (ghostDoorOpen > 0) ghostDoorOpen--;
 
@@ -52,7 +54,7 @@ unsigned char interrupt(void)
     renderActor(&actor_Ghost1);
     renderActor(&actor_Ghost2);
     renderActor(&actor_Ghost3);
-    renderActor(&actor_Ghost4);
+    renderActor(&actor_Ghost4);    
 
     // See if the player did anything good
     checkActorPlayer(&actor_Player);
@@ -63,9 +65,9 @@ unsigned char interrupt(void)
     moveActorGhost(&actor_Ghost2, 1, 0);
     moveActorGhost(&actor_Ghost3, 0, 1);
     moveActorGhost(&actor_Ghost4, 0, 0);       
-    
+        
     // Acknowlege the interrrupt 
-    VIC.irr++;
+    VIC.irr++;    
 
     return IRQ_HANDLED;                         
 }
@@ -83,10 +85,10 @@ void initInterrupt (void)
     VIC.ctrl1 = (VIC.ctrl1 & 0x7F);                 // Clear MSB of raster
     dummy = CIA1.icr;                               // Acknowlege any outstaiding interrupts from CIA1
     dummy = CIA2.icr;                               // Acknowlege any outstaiding interrupts from CIA1
-    VIC.rasterline = 220;                           // Set raster line
+    VIC.rasterline = 230;                           // Set raster line
     set_irq(&interrupt, stackSize, STACK_SIZE);     // Set the interrupt handler
     VIC.imr = 0x01;                                 // Enable the VIC raster interrupt
-    CLI();
+    CLI();    
 }
 
 // Copy the screen data to the buffers
@@ -247,7 +249,8 @@ void initPlayer(void)
 
 // Main entry point
 int main (void)
-{
+{    
+
     // Copy the graphics to where they belong
     copyScreen();
     copyChars();
@@ -265,7 +268,10 @@ int main (void)
     initInterrupt();    
     
     // Wait forever - Read joystick, move player.
-    while(1);
+    while(1)
+    {
+    
+    }
 
     return EXIT_SUCCESS;        
 }

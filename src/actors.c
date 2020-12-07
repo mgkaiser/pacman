@@ -100,7 +100,7 @@ unsigned char *LookTowardPlayer(unsigned char x, unsigned char y)
 // Take the data from the struct and actually draw the actor
 void renderActor(register struct actor *pActor)
 {   
-    int spriteNumber;
+    static int spriteNumber;
     
     spriteNumber = pActor->spriteNumber;
 
@@ -119,8 +119,8 @@ void renderActor(register struct actor *pActor)
 // Move the actor in the selected direction unless blocked
 void moveActorGhost(register struct actor *pActor, unsigned char aggressivex, unsigned char aggressivey)
 {
-    unsigned char screenx;
-    unsigned char screeny;  
+    static unsigned char screenx;
+    static unsigned char screeny;  
 
     if (pActor->moveDelayMax == 255 || pActor -> moveDelay != 0)
     {
@@ -263,10 +263,10 @@ void moveActorGhost(register struct actor *pActor, unsigned char aggressivex, un
 // Move the actor in the selected direction unless blocked
 void moveActorPlayer(register struct actor *pActor)
 {
-    unsigned char screenx;
-    unsigned char screeny;  
-    unsigned char xaligned;
-    unsigned char yaligned;
+    static unsigned char screenx;
+    static unsigned char screeny;  
+    static unsigned char xaligned;
+    static unsigned char yaligned;
         
     if (pActor->moveDelayMax == 255 || pActor -> moveDelay != 0)
     {
