@@ -128,6 +128,9 @@ void moveActorGhost(register struct actor *pActor, unsigned char aggressivex, un
         pActor->x += pActor->dx;
         pActor->y += pActor->dy;
 
+        if (pActor->x < 21) pActor->x = 237;
+        if (pActor->x > 237) pActor->x = 21;        
+
         if (pActor->dx != 0)
         {        
             screenx = spritexToscreenx (pActor->x);
@@ -271,6 +274,9 @@ void moveActorPlayer(register struct actor *pActor)
         // Act upon the last valid movement
         pActor->x += pActor->dx;
         pActor->y += pActor->dy;  
+
+        if (pActor->x < 21) pActor->x = 237;
+        if (pActor->x > 237) pActor->x = 21;        
 
         // What are the screen coords?
         screenx = spritexToscreenx (pActor->x);
