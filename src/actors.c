@@ -258,52 +258,54 @@ void moveActorPlayer(register struct actor *pActor)
     unsigned char xaligned;
     unsigned char yaligned;
 
+    // Act upon the last valid movement
     pActor->x += pActor->dx;
     pActor->y += pActor->dy;  
 
+    // What are the screen coords?
     screenx = spritexToscreenx (pActor->x);
     screeny = spriteyToscreeny (pActor->y);    
 
+    // Are we aligned
     xaligned = (screenxTospritex(screenx) == pActor->x);
     yaligned = (screenyTospritey(screeny) == pActor->y);    
 
-    if (pActor->dx != 0)
-    {            
-        if (xaligned)
+    // Make sure we didn't hit a wall in the X direction
+    if ((pActor->dx != 0) && xaligned)
+    {                    
+        if (isBlocked(screenx + pActor->dx, screeny ))
         {
-            if (isBlocked(screenx + pActor->dx, screeny ))
-            {
-                // Stop and wait for the player to tell you what to do next
-                pActor->dx = 0;                
-                pActor->framedata = (char*)&animation_player_still;  
-            }                                      
-        }                    
+            // Stop and wait for the player to tell you what to do next
+            pActor->dx = 0;                
+            pActor->framedata = (char*)&animation_player_still;  
+        }                                                          
     }
 
-    else if (pActor->dy != 0)
-    {                
-        if (yaligned)
+    // Make sure we didn't hit a wall in the Y direction
+    else if ((pActor->dy != 0) && yaligned)
+    {                        
+        if (isBlocked(screenx, screeny + pActor->dy ))
         {
-            if (isBlocked(screenx, screeny + pActor->dy ))
-            {
-                // Stop and wait for the player to tell you what to do next
-                pActor->dy = 0;
-                pActor->framedata = (char*)&animation_player_still;  
-            }                                          
-        }            
+            // Stop and wait for the player to tell you what to do next
+            pActor->dy = 0;
+            pActor->framedata = (char*)&animation_player_still;  
+        }                                                  
     }    
 
+    // Only accept joystick input when fully alligned
     if (xaligned && yaligned)
     {
         // Joystick left
         if (!(CIA1.pra & 4) && (!isBlocked(screenx - 1, screeny)))
         {
+            pActor->dy = 0;
             pActor->dx = -1;
             pActor->framedata = (char*)&animation_player_left;  
         }
         // Joystick right
         else if (!(CIA1.pra & 8) && (!isBlocked(screenx + 1, screeny)))
         {
+            pActor->dy = 0;
             pActor->dx = 1;
             pActor->framedata = (char*)&animation_player_right;  
         }
@@ -312,12 +314,14 @@ void moveActorPlayer(register struct actor *pActor)
         else if (!(CIA1.pra & 1) && (!isBlocked(screenx, screeny - 1 )))
         {
             pActor->dy = -1;
+            pActor->dx = 0;
             pActor->framedata = (char*)&animation_player_up;  
         }
         // Joystick down
         else if (!(CIA1.pra & 2) && (!isBlocked(screenx, screeny + 1)))
         {
             pActor->dy = 1;
+            pActor->dx = 0;
             pActor->framedata = (char*)&animation_player_down;  
         }
     }
