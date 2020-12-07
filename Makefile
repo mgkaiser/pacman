@@ -27,7 +27,7 @@ CONFIG  :=
 
 # Additional C compiler flags and options.
 # Default: none
-CFLAGS  = -g -Ors --codesize 500 -T -Cl
+CFLAGS  = -g -Osir --codesize 500 -T -Cl
 
 # Additional assembler flags and options.
 # Default: none
