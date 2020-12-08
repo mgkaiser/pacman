@@ -279,13 +279,7 @@ void showScore(void)
     draw_string(29, 1, 12, stringTemp);
 
     sprintf(stringTemp, "2up %06lu", score2);
-    draw_string(29, 3, 12, stringTemp);
-
-    sprintf(stringTemp, "pills %d", pillsRemaining);
-    draw_string(29, 5, 12, stringTemp);
-
-    sprintf(stringTemp, "dots %d", dotsRemaining);
-    draw_string(29, 6, 12, stringTemp);
+    draw_string(29, 3, 12, stringTemp);    
 }
 
 void resetLevel(unsigned char playTune)
