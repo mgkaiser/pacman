@@ -37,17 +37,20 @@ char *spriteData    = (char *)0xa000;
 char *spriteSlot    = (char *)0xbbf8;
 
 // Score
-unsigned int score1;
-unsigned int score2;
+unsigned long score1;
+unsigned long score2;
+unsigned int dotsRemaining;
+unsigned int pillsRemaining;
 char *stringTemp = "                 ";
 
 // Counter that increments every frame
 unsigned char interuptCounter;
 unsigned char frameTrigger;
+unsigned int waitCounter;
 
 // Interrupt handler called once per frame
 unsigned char interrupt(void)
-{             
+{   
     interuptCounter++;    
 
     // Draw the ghosts
@@ -55,18 +58,32 @@ unsigned char interrupt(void)
     renderActor(&actor_Ghost1);
     renderActor(&actor_Ghost2);
     renderActor(&actor_Ghost3);
-    renderActor(&actor_Ghost4);    
+    renderActor(&actor_Ghost4);   
 
-    // See if the player did anything good
-    checkActorPlayer(&actor_Player);
-    
-    // Check for their next movement
-    moveActorPlayer(&actor_Player);
-    moveActorGhost(&actor_Ghost1);
-    moveActorGhost(&actor_Ghost2);
-    moveActorGhost(&actor_Ghost3);
-    moveActorGhost(&actor_Ghost4);       
+    if (waitCounter != 0)
+    {
+        --waitCounter;
+    }   
+    else
+    {   
+        // If all the dot are gone, stop and wait!       
+        if (pillsRemaining == 0 && dotsRemaining == 0) 
+        {
+            waitCounter = 0xffff;
+            actor_Player.framedata = (char*)&animation_player_still;
+        }
         
+        // See if the player did anything good
+        checkActorPlayer(&actor_Player);
+        
+        // Check for their next movement
+        moveActorPlayer(&actor_Player);
+        moveActorGhost(&actor_Ghost1);
+        moveActorGhost(&actor_Ghost2);
+        moveActorGhost(&actor_Ghost3);
+        moveActorGhost(&actor_Ghost4);                           
+    }
+
     // Acknowlege the interrrupt 
     VIC.irr++;    
 
@@ -83,6 +100,7 @@ void initInterrupt (void)
 
     interuptCounter = 0;    
     frameTrigger = 0;
+    waitCounter = 0xffff; 
     
     SEI();    
     CIA1.icr = 0x7F;                                // Turn of CIA timer
@@ -252,48 +270,95 @@ void initPlayer(void)
     actor_Player.y = 0xB7;   
     actor_Player.dx = 1;
     actor_Player.dy = 0;     
-    actor_Player.framedata = (char*)&animation_player_right;
+    actor_Player.framedata = (char*)&animation_player_still;
+}
+
+void showScore(void)
+{
+    sprintf(stringTemp, "1up %06lu", score1);
+    draw_string(29, 1, 12, stringTemp);
+
+    sprintf(stringTemp, "2up %06lu", score2);
+    draw_string(29, 3, 12, stringTemp);
+
+    sprintf(stringTemp, "pills %d", pillsRemaining);
+    draw_string(29, 5, 12, stringTemp);
+
+    sprintf(stringTemp, "dots %d", dotsRemaining);
+    draw_string(29, 6, 12, stringTemp);
+}
+
+void resetLevel(unsigned char playTune)
+{
+    // Maybe play tune
+    if (playTune == 1)
+    {
+        waitCounter = 300; 
+    }
+    else
+    {
+        waitCounter = 180; 
+    }            
+
+    // Display Ready Message        
+
+    // Reset the game state
+    copyScreen();
+    initGhosts();    
+    initPlayer();
+    pillsRemaining = 4;
+    dotsRemaining = 218;
+    // Unscare Ghosts
+    showScore();
+    
+    // Wait a bit        
+    while(waitCounter != 0)
+    {
+        if (frameTrigger == 0)
+        {
+            sprintf(stringTemp, "wait %d", waitCounter);
+            draw_string(29, 7, 12, stringTemp);
+            frameTrigger = 1;
+        }
+    }
+
+    // Clear the ready message    
 }
 
 // Main entry point
 int main (void)
-{    
-    /*
-    initVic();  
-    copyScreen();
-    copyChars();
-    copySprites();  
-    draw_string_char(30,10,12);
-    draw_string_char(30,11,22);
-    return 0;
-    */
-
+{        
     // Copy the graphics to where they belong
-    copyScreen();
     copyChars();
     copySprites();
-
-    // Initialize the ghosts and players    
-    initGhosts();    
-    initPlayer();
 
     // Setup the video card
     initVic();    
 
-    // Kick off the interrupt
+    // Kick off the interrupt    
     initInterrupt();    
-    
+
+    // Initialize the ghosts and players    
+    resetLevel(1);    
+        
     // Wait forever - Read joystick, move player.
     while(1)
     {
+        // Wait for the frame to trigger 
         while(frameTrigger == 0);
 
-        sprintf(stringTemp, "1up %06d", score1);
-        draw_string(29, 1, 12, stringTemp);
+        // Show the score 
+        showScore();
 
-        sprintf(stringTemp, "2up %06d", score2);
-        draw_string(29, 3, 12, stringTemp);
+        // Reset if the player ate everything
+        if (pillsRemaining == 0 && dotsRemaining == 0) 
+        {
+            waitCounter = 180;
+            while(waitCounter != 0);
+            resetLevel(0);        
+        }
 
+        // Acknowledge the frame
         frameTrigger = 0;
     }
 

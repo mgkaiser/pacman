@@ -448,6 +448,7 @@ void checkActorPlayer(register struct actor *pActor)
         if (screenData[address] == 0x2E)
         {   
             score1 += 10;
+            --dotsRemaining;
             screenData[address] = 0x20;   
         }
 
@@ -455,6 +456,7 @@ void checkActorPlayer(register struct actor *pActor)
         if (screenData[address] == 0x51)
         {
             score1 += 100;
+            --pillsRemaining;
             screenData[address] = 0x20;  
 
             // Put Ghosts in scared mode
