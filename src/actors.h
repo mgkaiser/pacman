@@ -43,3 +43,4 @@ extern void moveActorPlayer(register struct actor *pActor);
 extern void checkActorPlayer(register struct actor *pActor);
 
 extern void draw_string_char(unsigned char x, unsigned char y, unsigned char ch);
+extern void draw_string(unsigned char x, unsigned char y, unsigned char w, char *ch);

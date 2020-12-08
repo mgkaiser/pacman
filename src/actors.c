@@ -432,6 +432,40 @@ void moveActorPlayer(register struct actor *pActor)
 // Did we eat fruit?
 void checkActorPlayer(register struct actor *pActor)
 {
+    static unsigned char screenx;
+    static unsigned char screeny;  
+    static unsigned int address;
+    
+    // What are the screen coords?
+    screenx = spritexToscreenx (pActor->x);
+    screeny = spriteyToscreeny (pActor->y);    
+    
+    if ((screenxTospritex(screenx) == pActor->x) && (screenyTospritey(screeny) == pActor->y))
+    {
+        address = screenxyToAddress(screenx, screeny);
+        
+        // Eat a dot
+        if (screenData[address] == 0x2E)
+        {   
+            score1 += 10;
+            screenData[address] = 0x20;   
+        }
 
+        // Eat a power pill
+        if (screenData[address] == 0x51)
+        {
+            score1 += 100;
+            screenData[address] = 0x20;  
+
+            // Put Ghosts in scared mode
+        }
+
+        // Hit scared ghost
+
+        // Hit well ghost
+
+        // Hit fruit
+        
+    }    
 }
 

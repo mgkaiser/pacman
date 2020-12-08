@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <conio.h>
+#include <stdio.h>
 #include <cc65.h>
 #include <c64.h>
 #include "maze_tiles.h"
@@ -35,8 +36,14 @@ char *spriteData    = (char *)0xa000;
 // Pointer to the sprite slots
 char *spriteSlot    = (char *)0xbbf8;
 
+// Score
+unsigned int score1;
+unsigned int score2;
+char *stringTemp = "                 ";
+
 // Counter that increments every frame
 unsigned char interuptCounter;
+unsigned char frameTrigger;
 
 // Interrupt handler called once per frame
 unsigned char interrupt(void)
@@ -63,6 +70,9 @@ unsigned char interrupt(void)
     // Acknowlege the interrrupt 
     VIC.irr++;    
 
+    // Tell main thread we drew a frame
+    frameTrigger=1;
+
     return IRQ_HANDLED;                         
 }
 
@@ -72,6 +82,7 @@ void initInterrupt (void)
     unsigned short dummy;     
 
     interuptCounter = 0;    
+    frameTrigger = 0;
     
     SEI();    
     CIA1.icr = 0x7F;                                // Turn of CIA timer
@@ -80,7 +91,7 @@ void initInterrupt (void)
     dummy = CIA2.icr;                               // Acknowlege any outstaiding interrupts from CIA1
     VIC.rasterline = 230;                           // Set raster line
     set_irq(&interrupt, stackSize, STACK_SIZE);     // Set the interrupt handler
-    VIC.imr = 0x01;                                 // Enable the VIC raster interrupt
+    VIC.imr = 0x01;                                 // Enable the VIC raster interrupt    
     CLI();    
 }
 
@@ -275,7 +286,15 @@ int main (void)
     // Wait forever - Read joystick, move player.
     while(1)
     {
-    
+        while(frameTrigger == 0);
+
+        sprintf(stringTemp, "1up %06d", score1);
+        draw_string(29, 1, 12, stringTemp);
+
+        sprintf(stringTemp, "2up %06d", score2);
+        draw_string(29, 3, 12, stringTemp);
+
+        frameTrigger = 0;
     }
 
     return EXIT_SUCCESS;        
