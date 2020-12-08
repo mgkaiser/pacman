@@ -282,6 +282,71 @@ void showScore(void)
     draw_string(29, 3, 12, stringTemp);    
 }
 
+void showReady()
+{
+    // Double size
+    VIC.spr_exp_x = 0xe0;
+    VIC.spr_exp_y = 0xe0;
+
+    // Set images
+    spriteSlot[5] = 0x97;
+    spriteSlot[6] = 0x98;
+
+    // Move sprit1es to
+    VIC.spr5_x = 95;
+    VIC.spr5_y = 110;
+    VIC.spr6_x = 143;
+    VIC.spr6_y = 110;    
+
+    // Set Color
+    VIC.spr5_color = COLOR_YELLOW;
+    VIC.spr6_color = COLOR_YELLOW;
+    
+    // Enable sprites
+    VIC.spr_ena = 0x7f;
+
+}
+
+void hideReady()
+{
+    // Disable sprites
+    VIC.spr_ena = 0x1f;
+}
+
+void showGameOver()
+{
+    // Double size
+    VIC.spr_exp_x = 0xe0;
+    VIC.spr_exp_y = 0xe0;
+
+    // Set images
+    spriteSlot[5] = 0x99;
+    spriteSlot[6] = 0x9a;
+    spriteSlot[7] = 0x9b;
+
+    // Move sprit1es to    
+    VIC.spr5_x = 77;
+    VIC.spr5_y = 110;
+    VIC.spr6_x = 125;
+    VIC.spr6_y = 110;
+    VIC.spr7_x = 173;
+    VIC.spr7_y = 110;        
+
+    // Set Color
+    VIC.spr5_color = COLOR_YELLOW;
+    VIC.spr6_color = COLOR_YELLOW;
+    VIC.spr7_color = COLOR_YELLOW;
+    
+    // Enable sprites
+    VIC.spr_ena = 0xff;     
+}
+
+void hideGameOver()
+{
+    // Disable sprites
+    VIC.spr_ena = 0x1f;
+}
+
 void resetLevel(unsigned char playTune)
 {
     // Maybe play tune
@@ -294,7 +359,8 @@ void resetLevel(unsigned char playTune)
         waitCounter = 180; 
     }            
 
-    // Display Ready Message        
+    // Display Ready Message  
+    showReady();      
 
     // Reset the game state
     copyScreen();
@@ -317,6 +383,7 @@ void resetLevel(unsigned char playTune)
     }
 
     // Clear the ready message    
+    hideReady();
 }
 
 // Main entry point
@@ -358,3 +425,5 @@ int main (void)
 
     return EXIT_SUCCESS;        
 }
+
+
