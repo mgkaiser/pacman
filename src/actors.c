@@ -1,4 +1,7 @@
+#include <6502.h>
 #include <c64.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "actors.h"
 #include "pacman.h"
 
@@ -22,6 +25,8 @@ struct actor actor_Ghost2;
 struct actor actor_Ghost3;
 struct actor actor_Ghost4;
 struct actor actor_Player;
+
+char buf[20];
 
 // Convert sprite x coord to screen x coord
 unsigned char spritexToscreenx(unsigned char spritex)
@@ -57,11 +62,11 @@ unsigned int screenxyToAddress(unsigned char screenx, unsigned char screeny)
 unsigned char isBlocked(unsigned char screenx, unsigned char screeny)
 {
     unsigned char charToCheck;
-    charToCheck = screenData[screenxyToAddress(screenx, screeny)];
+    charToCheck = screenData[screenxyToAddress(screenx, screeny)];        
+    //draw_string_char(30, 10, charToCheck);
     if (charToCheck == 0x2E) return 0;
     if (charToCheck == 0x51) return 0;
-    if (charToCheck == 0x20) return 0;  
-     
+    if (charToCheck == 0x20) return 0;     
     return 1;
 }
 
@@ -69,10 +74,11 @@ unsigned char isBlockedGhostDoorOpen(unsigned char screenx, unsigned char screen
 {
     unsigned char charToCheck;
     charToCheck = screenData[screenxyToAddress(screenx, screeny)];    
+    //draw_string_char(30, 10, charToCheck);
     if (charToCheck == 0x2E) return 0;
     if (charToCheck == 0x51) return 0;
     if (charToCheck == 0x20) return 0;
-    if (charToCheck == 0x64) return 0;
+    if (charToCheck == 0x79) return 0;    
     return 1;
 }
 
@@ -127,18 +133,50 @@ void renderActor(register struct actor *pActor)
     }
 }
 
+void draw_string(unsigned char x, unsigned char y, unsigned char w, char *ch)
+{
+	static unsigned char xctr;		
+			
+	char ch2;
+		
+	for(xctr = 0; xctr < w; ++xctr)
+	{	
+		ch2 = ch[xctr];
+        if (ch2 == 0x00) break;
+		
+		if (ch[xctr] <= 0x1f) ch2 = ch2 + 0x80;
+		if (ch[xctr] >= 0x20 & ch[xctr] <= 0x3f) ch2 = ch2 + 0x00;
+		if (ch[xctr] >= 0x40 & ch[xctr] <= 0x5f) ch2 = ch2 + 0xc0;
+		if (ch[xctr] >= 0x60 & ch[xctr] <= 0x7f) ch2 = ch2 + 0xe0;
+		if (ch[xctr] >= 0x80 & ch[xctr] <= 0x9f) ch2 = ch2 + 0x40;
+		if (ch[xctr] >= 0xa0 & ch[xctr] <= 0xbf) ch2 = ch2 + 0xc0;
+		if (ch[xctr] >= 0xc0 & ch[xctr] <= 0xdf) ch2 = ch2 + 0x80;
+		if (ch[xctr] >= 0xe0 & ch[xctr] <= 0xfe) ch2 = ch2 + 0x80;
+		if (ch[xctr] == 0xff) ch2 = 0x5e;
+		
+        screenData[screenxyToAddress(x + xctr,y)] = ch2;		
+	}
+	
+}
+
+void draw_string_char(unsigned char x, unsigned char y, unsigned char ch)
+{
+    sprintf(buf, "%d", ch);
+    draw_string(x, y , 0x04, buf);
+}
+
 // Move the actor in the selected direction unless blocked
-void moveActorGhost(register struct actor *pActor, unsigned char aggressivex, unsigned char aggressivey)
+void moveActorGhost(register struct actor *pActor)
 {
     static unsigned char screenx;
     static unsigned char screeny;  
 
     if (pActor->ghostDoorOpen != 0) {
         pActor->ghostDoorOpen = pActor->ghostDoorOpen - 1;
-        pActor->suppressAggression = 50;
+        pActor->suppressAggression = 150;
     }
     if (pActor->suppressAggression != 0) pActor->suppressAggression = pActor->suppressAggression - 1;
-
+        
     if (pActor->moveDelayMax == 255 || pActor -> moveDelay != 0)
     {
         static unsigned char _isBlocked;
@@ -155,23 +193,24 @@ void moveActorGhost(register struct actor *pActor, unsigned char aggressivex, un
             screeny = spriteyToscreeny (pActor->y);
             if (screenxTospritex(screenx) == pActor->x)
             {
-                if (isBlocked(screenx + pActor->dx, screeny ))
+                _isBlocked = isBlockedGhostDoorOpen(screenx + pActor->dx, screeny );                
+                if (_isBlocked)
                 {
                     // Stop X motion
-                    pActor->dx = 0;
+                    pActor->dx = 0;                                                              
 
                     // The player is above us
-                    if ((aggressivey == 1  && actor_Player.y < pActor->y) || (aggressivey == 0 && actor_Player.y > pActor->y ))
+                    if ((pActor->aggressivey == 1  && actor_Player.y < pActor->y) || (pActor->aggressivey == 0 && actor_Player.y > pActor->y ))
                     {
                         // Go Up                    
                         if (!isBlocked(screenx, screeny - 1 ))
                         {
-                            pActor->dy = -1;
+                            pActor->dy = -1;                            
                         }
                         // If that's blocked go the other way
                         else if (!isBlocked(screenx, screeny + 1 ))
                         {
-                            pActor->dy = 1;                                                
+                            pActor->dy = 1;                               
                         }                                                          
                     }
 
@@ -181,29 +220,29 @@ void moveActorGhost(register struct actor *pActor, unsigned char aggressivex, un
                         // Go Down                    
                         if (!isBlocked(screenx, screeny + 1 ))
                         {
-                            pActor->dy = 1;
+                            pActor->dy = 1;                        
                         }
                         // If that's blocked go the other way                
                         else if (!isBlocked(screenx, screeny - 1 ))
                         {
-                            pActor->dy = -1;
+                            pActor->dy = -1;                            
                         }                                 
                     }                
                 }  
                 else
                 {
-                    if (aggressivex && pActor->suppressAggression == 0)
+                    if (pActor->aggressivex && pActor->suppressAggression == 0)
                     {
                         // Look up and down to see if we can get closer to  player                
                         if (!isBlocked(screenx, screeny - 1) && actor_Player.y < pActor->y)
                         {
                             pActor->dy = -1;                    
-                            pActor->dx = 0;                    
+                            pActor->dx = 0;                                            
                         } 
                         else if (!isBlocked(screenx, screeny + 1) && actor_Player.y > pActor->y)
                         {
                             pActor->dy = 1;                    
-                            pActor->dx = 0;                    
+                            pActor->dx = 0;                                             
                         }                 
                     }
                 }                                  
@@ -244,15 +283,15 @@ void moveActorGhost(register struct actor *pActor, unsigned char aggressivex, un
                     pActor->dy = 0;
 
                     // The player is to our left
-                    if ((aggressivex == 1  && actor_Player.x < pActor->x) || (aggressivex == 0 && actor_Player.x > pActor->x ))
+                    if ((pActor->aggressivex == 1  && actor_Player.x < pActor->x) || (pActor->aggressivex == 0 && actor_Player.x > pActor->x ))
                     {
                         // Go left                    
-                        if (!isBlocked(screenx - 1, screeny ))
+                        if (!isBlockedGhostDoorOpen(screenx - 1, screeny ))
                         {
                             pActor->dx = -1;                             
                         }
                         // If that's blocked go the other way
-                        else if (!isBlocked(screenx + 1, screeny ))
+                        else if (!isBlockedGhostDoorOpen(screenx + 1, screeny ))
                         {
                             pActor->dx = 1;                                   
                         }                                      
@@ -262,12 +301,12 @@ void moveActorGhost(register struct actor *pActor, unsigned char aggressivex, un
                     else
                     {       
                         
-                        if (!isBlocked(screenx + 1, screeny ) )
+                        if (!isBlockedGhostDoorOpen(screenx + 1, screeny ) )
                         {
                             pActor->dx = 1;                                  
                         }
                         // If that's blocked go the other way                
-                        else if (!isBlocked(screenx -1 , screeny))
+                        else if (!isBlockedGhostDoorOpen(screenx -1 , screeny))
                         {
                             pActor->dx = -1;                                  
                         }                            
@@ -275,15 +314,15 @@ void moveActorGhost(register struct actor *pActor, unsigned char aggressivex, un
                 }
                 else
                 {
-                    if (aggressivey && pActor->suppressAggression == 0)
+                    if (pActor->aggressivey && pActor->suppressAggression == 0)
                     {
                         // Look left and right to see if we can get closer to player                
-                        if (!isBlocked(screenx - 1, screeny) && actor_Player.x < pActor->x)
+                        if (!isBlockedGhostDoorOpen(screenx - 1, screeny) && actor_Player.x < pActor->x)
                         {
                             pActor->dy = 0;                    
                             pActor->dx = -1;                                 
                         } 
-                        else if (!isBlocked(screenx + 1, screeny) && actor_Player.x > pActor->x)
+                        else if (!isBlockedGhostDoorOpen(screenx + 1, screeny) && actor_Player.x > pActor->x)
                         {
                             pActor->dy = 0;                    
                             pActor->dx = 1;                                   
@@ -329,7 +368,7 @@ void moveActorPlayer(register struct actor *pActor)
         // Make sure we didn't hit a wall in the X direction
         if ((pActor->dx != 0) && xaligned)
         {                    
-            if (isBlocked(screenx + pActor->dx, screeny ))
+            if (isBlockedGhostDoorOpen(screenx + pActor->dx, screeny ))
             {
                 // Stop and wait for the player to tell you what to do next
                 pActor->dx = 0;                

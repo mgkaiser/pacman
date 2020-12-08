@@ -55,10 +55,10 @@ unsigned char interrupt(void)
     
     // Check for their next movement
     moveActorPlayer(&actor_Player);
-    moveActorGhost(&actor_Ghost1, 1, 1);
-    moveActorGhost(&actor_Ghost2, 1, 0);
-    moveActorGhost(&actor_Ghost3, 0, 1);
-    moveActorGhost(&actor_Ghost4, 0, 0);       
+    moveActorGhost(&actor_Ghost1);
+    moveActorGhost(&actor_Ghost2);
+    moveActorGhost(&actor_Ghost3);
+    moveActorGhost(&actor_Ghost4);       
         
     // Acknowlege the interrrupt 
     VIC.irr++;    
@@ -118,54 +118,6 @@ void copySprites()
     }
 }
 
-// Set the actors to their initial state
-void initActors(void)
-{    
-    actor_Ghost1.spriteNumber = 0;
-    actor_Ghost1.frames = GHOST_FRAMES;
-    actor_Ghost1.frame = 0;    
-    actor_Ghost1.animationDelay = 0;
-    actor_Ghost1.animationDelayMax = 8;
-    actor_Ghost1.moveDelay = 0;
-    actor_Ghost1.moveDelayMax = 255;
-    actor_Ghost1.ghostDoorOpen = 0;
-
-    actor_Ghost2.spriteNumber = 1;
-    actor_Ghost2.frames = GHOST_FRAMES;
-    actor_Ghost2.frame = 0;    
-    actor_Ghost2.animationDelay = 0;
-    actor_Ghost2.animationDelayMax = 8;
-    actor_Ghost2.moveDelay = 0;
-    actor_Ghost2.moveDelayMax = 240;
-    actor_Ghost2.ghostDoorOpen = 100;
-
-    actor_Ghost3.spriteNumber = 2;
-    actor_Ghost3.frames = GHOST_FRAMES;
-    actor_Ghost3.frame = 0;    
-    actor_Ghost3.animationDelay = 0;
-    actor_Ghost3.animationDelayMax = 8;
-    actor_Ghost3.moveDelay = 0;
-    actor_Ghost3.moveDelayMax = 240;
-    actor_Ghost3.ghostDoorOpen = 150;
-
-    actor_Ghost4.spriteNumber = 3;
-    actor_Ghost4.frames = GHOST_FRAMES;
-    actor_Ghost4.frame = 0;    
-    actor_Ghost4.animationDelay = 0;
-    actor_Ghost4.animationDelayMax = 8;
-    actor_Ghost4.moveDelay = 0;
-    actor_Ghost4.moveDelayMax = 220;
-    actor_Ghost4.ghostDoorOpen = 200;
-
-    actor_Player.spriteNumber = 4;
-    actor_Player.frames = PLAYER_FRAMES;
-    actor_Player.frame = 0;    
-    actor_Player.animationDelay = 0;
-    actor_Player.animationDelayMax = 6;
-    actor_Player.moveDelay = 0;
-    actor_Player.moveDelayMax = 250;    
-}
-
 // Setup the video chip
 void initVic(void)
 {
@@ -197,38 +149,79 @@ void initGhosts(void)
 
     // Set the 2nd and 3rd sprite colors white and black
     VIC.spr_mcolor0 = COLOR_WHITE;
-    VIC.spr_mcolor1 = COLOR_BLACK;  
+    VIC.spr_mcolor1 = COLOR_BLACK; 
   
     // Ghost 1 (Red) Initial Postion, above the box    
     VIC.spr0_color = COLOR_RED;
+    actor_Ghost1.spriteNumber = 0;
+    actor_Ghost1.frames = GHOST_FRAMES;
+    actor_Ghost1.frame = 0;    
+    actor_Ghost1.animationDelay = 0;
+    actor_Ghost1.animationDelayMax = 8;
+    actor_Ghost1.moveDelay = 0;
+    actor_Ghost1.moveDelayMax = 255;
+    actor_Ghost1.ghostDoorOpen = 0;
     actor_Ghost1.x = 0x81;
     actor_Ghost1.y = 0x57;   
     actor_Ghost1.dx = 1;
     actor_Ghost1.dy = 0;     
+    actor_Ghost1.aggressivex = 1;
+    actor_Ghost1.aggressivey = 1;
     actor_Ghost1.framedata = (char*)&animation_ghost_left_up;      
+    
 
     // Ghost 2 (Pink) Initial Postion, in the box
     VIC.spr1_color = COLOR_LIGHTRED;
+    actor_Ghost2.spriteNumber = 1;
+    actor_Ghost2.frames = GHOST_FRAMES;
+    actor_Ghost2.frame = 0;    
+    actor_Ghost2.animationDelay = 0;
+    actor_Ghost2.animationDelayMax = 8;
+    actor_Ghost2.moveDelay = 0;
+    actor_Ghost2.moveDelayMax = 240;
+    actor_Ghost2.ghostDoorOpen = 100;
     actor_Ghost2.x = 0x89;
     actor_Ghost2.y = 0x87;   
     actor_Ghost2.dx = 0;
     actor_Ghost2.dy = -1;     
+    actor_Ghost2.aggressivex = 1;
+    actor_Ghost2.aggressivey = 0;
     actor_Ghost2.framedata = (char*)&animation_ghost_right_up;    
 
     // Ghost 3 (Orange) Initial Postion, in the box
     VIC.spr2_color = COLOR_ORANGE;
+    actor_Ghost3.spriteNumber = 2;
+    actor_Ghost3.frames = GHOST_FRAMES;
+    actor_Ghost3.frame = 0;    
+    actor_Ghost3.animationDelay = 0;
+    actor_Ghost3.animationDelayMax = 8;
+    actor_Ghost3.moveDelay = 0;
+    actor_Ghost3.moveDelayMax = 240;
+    actor_Ghost3.ghostDoorOpen = 180;
     actor_Ghost3.x = 0x79;
     actor_Ghost3.y = 0x87;   
     actor_Ghost3.dx = 0;
     actor_Ghost3.dy = -1;     
+    actor_Ghost3.aggressivex = 0;
+    actor_Ghost3.aggressivey = 1;
     actor_Ghost3.framedata = (char*)&animation_ghost_left_down;    
 
     // Ghost 4 (Cyan) Initial Postion, in the box
     VIC.spr3_color = COLOR_CYAN;
+    actor_Ghost4.spriteNumber = 3;
+    actor_Ghost4.frames = GHOST_FRAMES;
+    actor_Ghost4.frame = 0;    
+    actor_Ghost4.animationDelay = 0;
+    actor_Ghost4.animationDelayMax = 8;
+    actor_Ghost4.moveDelay = 0;
+    actor_Ghost4.moveDelayMax = 220;
+    actor_Ghost4.ghostDoorOpen = 255; 
     actor_Ghost4.x = 0x81;
     actor_Ghost4.y = 0x87;   
     actor_Ghost4.dx = 0;
     actor_Ghost4.dy = -1;     
+    actor_Ghost4.aggressivex = 0;
+    actor_Ghost4.aggressivey = 0;
     actor_Ghost4.framedata = (char*)&animation_ghost_right_down;              
 }
 
@@ -237,6 +230,13 @@ void initPlayer(void)
 {
     // Player
     VIC.spr4_color = COLOR_YELLOW;
+    actor_Player.spriteNumber = 4;
+    actor_Player.frames = PLAYER_FRAMES;
+    actor_Player.frame = 0;    
+    actor_Player.animationDelay = 0;
+    actor_Player.animationDelayMax = 6;
+    actor_Player.moveDelay = 0;
+    actor_Player.moveDelayMax = 250;   
     actor_Player.x = 0x85;
     actor_Player.y = 0xB7;   
     actor_Player.dx = 1;
@@ -247,14 +247,22 @@ void initPlayer(void)
 // Main entry point
 int main (void)
 {    
+    /*
+    initVic();  
+    copyScreen();
+    copyChars();
+    copySprites();  
+    draw_string_char(30,10,12);
+    draw_string_char(30,11,22);
+    return 0;
+    */
 
     // Copy the graphics to where they belong
     copyScreen();
     copyChars();
     copySprites();
 
-    // Initialize the ghosts and players
-    initActors();
+    // Initialize the ghosts and players    
     initGhosts();    
     initPlayer();
 

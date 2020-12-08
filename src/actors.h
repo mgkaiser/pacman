@@ -5,6 +5,8 @@ struct actor {
     unsigned char y;
     unsigned char dx;
     unsigned char dy;
+    unsigned char aggressivex;
+    unsigned char aggressivey;
     unsigned char animationDelay;
     unsigned char animationDelayMax;
     unsigned char moveDelay;
@@ -36,6 +38,8 @@ extern struct actor actor_Ghost4;
 extern struct actor actor_Player;
 
 extern void renderActor(register struct actor *Actor);
-extern void moveActorGhost(register struct actor *pActor, unsigned char aggressivex, unsigned char aggressivey);
+extern void moveActorGhost(register struct actor *pActor);
 extern void moveActorPlayer(register struct actor *pActor);
 extern void checkActorPlayer(register struct actor *pActor);
+
+extern void draw_string_char(unsigned char x, unsigned char y, unsigned char ch);
