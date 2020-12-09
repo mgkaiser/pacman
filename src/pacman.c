@@ -16,6 +16,7 @@
 #include "pacman_sprites.h"
 #include "actors.h"
 #include "pacman.h"
+#include "intro_music.h"
 
 // Size of stack for the interrupt
 #define STACK_SIZE 16
@@ -35,6 +36,8 @@ char *colorData     = (char *)0xd800;
 char *spriteData    = (char *)0xa000;
 // Pointer to the sprite slots
 char *spriteSlot    = (char *)0xbbf8;
+//
+char *musicData     =(char *)0x9c5f;
 
 // Score
 unsigned long score1;
@@ -47,12 +50,14 @@ char *stringTemp = "                 ";
 unsigned char interuptCounter;
 unsigned char frameTrigger;
 unsigned int waitCounter;
+unsigned int playingTune;
+unsigned int playingTuneDelay;
 
 // Interrupt handler called once per frame
 unsigned char interrupt(void)
 {   
-    interuptCounter++;    
-
+    interuptCounter++;   
+    
     // Draw the ghosts
     renderActor(&actor_Player);
     renderActor(&actor_Ghost1);
@@ -60,10 +65,26 @@ unsigned char interrupt(void)
     renderActor(&actor_Ghost3);
     renderActor(&actor_Ghost4);   
 
+    // Play Music while waiting
     if (waitCounter != 0)
-    {
+    {       
+        if (playingTune)
+        {   
+            if (playingTuneDelay != 0) {
+                __asm__ ("jsr $9c7a");                         
+            }
+            else
+            {
+                playingTuneDelay = 3;
+            }
+
+            --playingTuneDelay;  
+        }
+        
         --waitCounter;
     }   
+
+    // Normal loop
     else
     {   
         // If all the dot are gone, stop and wait!       
@@ -111,6 +132,18 @@ void initInterrupt (void)
     set_irq(&interrupt, stackSize, STACK_SIZE);     // Set the interrupt handler
     VIC.imr = 0x01;                                 // Enable the VIC raster interrupt    
     CLI();    
+}
+
+// Copy the music data to the buffers
+void copyMusic(void)
+{
+    static unsigned int x;
+    static unsigned int y;
+
+    for (x = 0, y = Pac_Man_sid_start; y < Pac_Man_sid_len ; ++x, ++y)
+    {
+        musicData[x] = Pac_Man_sid[y];        
+    }
 }
 
 // Copy the screen data to the buffers
@@ -349,10 +382,15 @@ void hideGameOver()
 
 void resetLevel(unsigned char playTune)
 {
+            
     // Maybe play tune
     if (playTune == 1)
     {
-        waitCounter = 300; 
+        // Init Music
+        __asm__ ("jsr $9c5f");
+        playingTune = 1;
+        playingTuneDelay == 2;
+        waitCounter = 400; 
     }
     else
     {
@@ -372,15 +410,7 @@ void resetLevel(unsigned char playTune)
     showScore();
     
     // Wait a bit        
-    while(waitCounter != 0)
-    {
-        if (frameTrigger == 0)
-        {
-            sprintf(stringTemp, "wait %d", waitCounter);
-            draw_string(29, 7, 12, stringTemp);
-            frameTrigger = 1;
-        }
-    }
+    while(waitCounter != 0) {}    
 
     // Clear the ready message    
     hideReady();
@@ -392,6 +422,7 @@ int main (void)
     // Copy the graphics to where they belong
     copyChars();
     copySprites();
+    copyMusic();
 
     // Setup the video card
     initVic();    
