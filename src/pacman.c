@@ -50,13 +50,18 @@ char *stringTemp = "                 ";
 unsigned char interuptCounter;
 unsigned char frameTrigger;
 unsigned int waitCounter;
-unsigned int playingTune;
-unsigned int playingTuneDelay;
+
+unsigned int scan_start;
+unsigned int scan_afterdraw;
+unsigned int scan_aftermusic;
+unsigned int scan_done;
 
 // Interrupt handler called once per frame
 unsigned char interrupt(void)
 {   
-    interuptCounter++;   
+    scan_start = VIC.rasterline;
+
+    ++interuptCounter;   
     
     // Draw the ghosts
     renderActor(&actor_Player);
@@ -65,22 +70,19 @@ unsigned char interrupt(void)
     renderActor(&actor_Ghost3);
     renderActor(&actor_Ghost4);   
 
-    // Play Music while waiting
-    if (waitCounter != 0)
-    {       
-        if (playingTune)
-        {   
-            if (playingTuneDelay != 0) {
-                __asm__ ("jsr $9c7a");                         
-            }
-            else
-            {
-                playingTuneDelay = 3;
-            }
+    scan_afterdraw = VIC.rasterline;
 
-            --playingTuneDelay;  
-        }
-        
+    // Play tune                                   
+    //__asm__ ("jsr $9c7a");      
+    if ((interuptCounter & 0x01) == 1) {
+        __asm__ ("jsr $9c7a");                         
+    }
+    
+    scan_aftermusic = VIC.rasterline;
+    
+    // Wait
+    if (waitCounter != 0)
+    {               
         --waitCounter;
     }   
 
@@ -106,10 +108,12 @@ unsigned char interrupt(void)
     }
 
     // Acknowlege the interrrupt 
-    VIC.irr++;    
+    VIC.irr = 1;    
 
     // Tell main thread we drew a frame
     frameTrigger=1;
+
+    scan_done = VIC.rasterline;
 
     return IRQ_HANDLED;                         
 }
@@ -220,7 +224,7 @@ void initGhosts(void)
     actor_Ghost1.frame = 0;    
     actor_Ghost1.animationDelay = 0;
     actor_Ghost1.animationDelayMax = 8;
-    actor_Ghost1.moveDelay = 0;
+    actor_Ghost1.moveDelay = 255;
     actor_Ghost1.moveDelayMax = 255;
     actor_Ghost1.ghostDoorOpen = 0;
     actor_Ghost1.x = 0x81;
@@ -239,8 +243,8 @@ void initGhosts(void)
     actor_Ghost2.frame = 0;    
     actor_Ghost2.animationDelay = 0;
     actor_Ghost2.animationDelayMax = 8;
-    actor_Ghost2.moveDelay = 0;
-    actor_Ghost2.moveDelayMax = 240;
+    actor_Ghost2.moveDelay = 30;
+    actor_Ghost2.moveDelayMax = 30;
     actor_Ghost2.ghostDoorOpen = 100;
     actor_Ghost2.x = 0x89;
     actor_Ghost2.y = 0x87;   
@@ -257,8 +261,8 @@ void initGhosts(void)
     actor_Ghost3.frame = 0;    
     actor_Ghost3.animationDelay = 0;
     actor_Ghost3.animationDelayMax = 8;
-    actor_Ghost3.moveDelay = 0;
-    actor_Ghost3.moveDelayMax = 240;
+    actor_Ghost3.moveDelay = 30;
+    actor_Ghost3.moveDelayMax = 30;
     actor_Ghost3.ghostDoorOpen = 180;
     actor_Ghost3.x = 0x79;
     actor_Ghost3.y = 0x87;   
@@ -275,8 +279,8 @@ void initGhosts(void)
     actor_Ghost4.frame = 0;    
     actor_Ghost4.animationDelay = 0;
     actor_Ghost4.animationDelayMax = 8;
-    actor_Ghost4.moveDelay = 0;
-    actor_Ghost4.moveDelayMax = 220;
+    actor_Ghost4.moveDelay = 15;
+    actor_Ghost4.moveDelayMax = 15;
     actor_Ghost4.ghostDoorOpen = 255; 
     actor_Ghost4.x = 0x81;
     actor_Ghost4.y = 0x87;   
@@ -297,8 +301,8 @@ void initPlayer(void)
     actor_Player.frame = 0;    
     actor_Player.animationDelay = 0;
     actor_Player.animationDelayMax = 6;
-    actor_Player.moveDelay = 0;
-    actor_Player.moveDelayMax = 250;   
+    actor_Player.moveDelay = 30;
+    actor_Player.moveDelayMax = 30;   
     actor_Player.x = 0x85;
     actor_Player.y = 0xB7;   
     actor_Player.dx = 1;
@@ -313,6 +317,32 @@ void showScore(void)
 
     sprintf(stringTemp, "2up %06lu", score2);
     draw_string(29, 3, 12, stringTemp);    
+}
+
+void showDebug(void)
+{
+    sprintf(stringTemp, "st %06d", scan_start);
+    draw_string(29, 5, 12, stringTemp);    
+    sprintf(stringTemp, "ad %06d", scan_afterdraw);
+    draw_string(29, 6, 12, stringTemp);    
+    sprintf(stringTemp, "am %06d", scan_aftermusic);
+    draw_string(29, 7, 12, stringTemp);    
+    sprintf(stringTemp, "do %06d", scan_done);
+    draw_string(29, 8, 12, stringTemp);        
+
+    /*
+    sprintf(stringTemp, "g1 %06d", actor_Ghost1.moveDelay);
+    draw_string(29, 10, 12, stringTemp);        
+    sprintf(stringTemp, "g2 %06d", actor_Ghost2.moveDelay);
+    draw_string(29, 11, 12, stringTemp);        
+    sprintf(stringTemp, "g3 %06d", actor_Ghost3.moveDelay);
+    draw_string(29, 12, 12, stringTemp);        
+    sprintf(stringTemp, "g4 %06d", actor_Ghost4.moveDelay);
+    draw_string(29, 13, 12, stringTemp);        
+    sprintf(stringTemp, "p1 %06d", actor_Player.moveDelay);
+    draw_string(29, 14, 12, stringTemp);        
+    */
+    
 }
 
 void showReady()
@@ -387,10 +417,13 @@ void resetLevel(unsigned char playTune)
     if (playTune == 1)
     {
         // Init Music
-        __asm__ ("jsr $9c5f");
-        playingTune = 1;
-        playingTuneDelay == 2;
-        waitCounter = 400; 
+        SEI();
+        __asm__ ("lda #00");
+        __asm__ ("tax");
+        __asm__ ("tay");
+        __asm__ ("jsr $9c5f");        
+        CLI();        
+        waitCounter = 570; 
     }
     else
     {
@@ -410,7 +443,7 @@ void resetLevel(unsigned char playTune)
     showScore();
     
     // Wait a bit        
-    while(waitCounter != 0) {}    
+    while(waitCounter != 0) {}        
 
     // Clear the ready message    
     hideReady();
@@ -441,6 +474,7 @@ int main (void)
 
         // Show the score 
         showScore();
+        showDebug();
 
         // Reset if the player ate everything
         if (pillsRemaining == 0 && dotsRemaining == 0) 
@@ -449,7 +483,7 @@ int main (void)
             while(waitCounter != 0);
             resetLevel(0);        
         }
-
+        
         // Acknowledge the frame
         frameTrigger = 0;
     }

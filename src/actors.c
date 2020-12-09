@@ -117,7 +117,7 @@ unsigned char *LookTowardPlayer(unsigned char x, unsigned char y)
 // Take the data from the struct and actually draw the actor
 void renderActor(register struct actor *pActor)
 {   
-    static int spriteNumber;
+    static unsigned char spriteNumber;
     
     spriteNumber = pActor->spriteNumber;
 
@@ -177,7 +177,7 @@ void moveActorGhost(register struct actor *pActor)
     }
     if (pActor->suppressAggression != 0) pActor->suppressAggression = pActor->suppressAggression - 1;
         
-    if (pActor->moveDelayMax == 255 || pActor -> moveDelay != 0)
+    if (pActor->moveDelayMax == 255 || --(pActor -> moveDelay) != 1)
     {
         static unsigned char _isBlocked;
   
@@ -334,8 +334,7 @@ void moveActorGhost(register struct actor *pActor)
         
         pActor->framedata = LookTowardPlayer(pActor->x, pActor-> y);
     }
-
-    --pActor->moveDelay;
+    
     if (pActor->moveDelay == 0) pActor->moveDelay = pActor->moveDelayMax;
 }
 
@@ -347,7 +346,7 @@ void moveActorPlayer(register struct actor *pActor)
     static unsigned char xaligned;
     static unsigned char yaligned;
         
-    if (pActor->moveDelayMax == 255 || pActor -> moveDelay != 0)
+    if (pActor->moveDelayMax == 255 || --(pActor -> moveDelay) != 1)
     {
 
         // Act upon the last valid movement
@@ -421,8 +420,7 @@ void moveActorPlayer(register struct actor *pActor)
             }
         }
     }
-
-    --pActor->moveDelay;
+    
     if (pActor->moveDelay == 0) pActor->moveDelay = pActor->moveDelayMax;
 }
 
