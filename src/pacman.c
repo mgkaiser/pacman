@@ -142,9 +142,9 @@ void copyMusic(void)
     static unsigned int x;
     static unsigned int y;
 
-    for (x = 0, y = Pac_Man_sid_start; y <= Pac_Man_sid_len ; ++x, ++y)
+    for (x = 0, y = SID_FILE_OFFSET; y <= pacman_sid_len ; ++x, ++y)
     {
-        musicData[x] = Pac_Man_sid[y];        
+        musicData[x] = pacman_sid[y];        
     }    
 }
 
@@ -417,18 +417,16 @@ void resetLevel(unsigned char playTune)
     // Maybe play tune
     if (playTune == 1)
     {
-        // Init Music
-        SEI();
-        __asm__ ("lda #00");
-        __asm__ ("tax");
-        __asm__ ("tay");
+        // Init Music        
+        SEI();               
+        __asm__ ("lda #01");        
         __asm__ ("jsr $c000");        
         CLI();        
-        waitCounter = 570; 
+        waitCounter = 250; 
     }
     else
     {
-        waitCounter = 180; 
+        waitCounter = 120; 
     }            
 
     // Display Ready Message  
@@ -446,7 +444,7 @@ void resetLevel(unsigned char playTune)
     
     // Wait a bit        
     while(waitCounter != 0) {}        
-    
+        
     // Player is not dead
     playerDied = VIC.spr_coll;      
     playerDied = 0;
@@ -486,7 +484,7 @@ int main (void)
         // Reset if the player ate everything
         if (pillsRemaining == 0 && dotsRemaining == 0) 
         {
-            waitCounter = 180;
+            waitCounter = 120;
             while(waitCounter != 0);
             resetLevel(0);        
         }
@@ -495,7 +493,7 @@ int main (void)
         {
             waitCounter = 180;
             while(waitCounter != 0);
-            resetLevel(0);        
+            resetLevel(1);        
         }
         
         // Acknowledge the frame
