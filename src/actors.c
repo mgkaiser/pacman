@@ -17,7 +17,7 @@ unsigned char animation_player_down[]       = { 0x88, 0x8d, 0x8e, 0x8d };
 unsigned char animation_player_up[]         = { 0x88, 0x8b, 0x8c, 0x8b };
 unsigned char animation_player_left[]       = { 0x88, 0x8f, 0x90, 0x8f };
 unsigned char animation_player_still[]      = { 0x88, 0x88, 0x88, 0x88 };
-unsigned char animation_player_die[]      = { 0x88, 0x88, 0x88, 0x88 };
+unsigned char animation_player_die[]        = { 0x8b, 0x8b, 0x8c, 0x8c, 0x9c, 0x9c, 0x9e, 0x9e, 0x9f, 0x9f, 0xa0, 0xa0, 0xa1, 0xa1, 0xa2, 0xa2, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3, 0xa3};
 
 // The actors
 struct actor actor_Ghost1;
@@ -339,50 +339,50 @@ void moveActorGhost(register struct actor *pActor)
 }
 
 // Move the actor in the selected direction unless blocked
-void moveActorPlayer(register struct actor *pActor)
+void moveActorPlayer()
 {
     static unsigned char screenx;
     static unsigned char screeny;  
     static unsigned char xaligned;
     static unsigned char yaligned;
         
-    if (pActor->moveDelayMax == 255 || --(pActor -> moveDelay) != 1)
+    if (actor_Player.moveDelayMax == 255 || --(actor_Player. moveDelay) != 1)
     {
 
         // Act upon the last valid movement
-        pActor->x += pActor->dx;
-        pActor->y += pActor->dy;  
+        actor_Player.x += actor_Player.dx;
+        actor_Player.y += actor_Player.dy;  
 
-        if (pActor->x < 21) pActor->x = 237;
-        if (pActor->x > 237) pActor->x = 21;        
+        if (actor_Player.x < 21) actor_Player.x = 237;
+        if (actor_Player.x > 237) actor_Player.x = 21;        
 
         // What are the screen coords?
-        screenx = spritexToscreenx (pActor->x);
-        screeny = spriteyToscreeny (pActor->y);    
+        screenx = spritexToscreenx (actor_Player.x);
+        screeny = spriteyToscreeny (actor_Player.y);    
 
         // Are we aligned
-        xaligned = (screenxTospritex(screenx) == pActor->x);
-        yaligned = (screenyTospritey(screeny) == pActor->y);    
+        xaligned = (screenxTospritex(screenx) == actor_Player.x);
+        yaligned = (screenyTospritey(screeny) == actor_Player.y);    
 
         // Make sure we didn't hit a wall in the X direction
-        if ((pActor->dx != 0) && xaligned)
+        if ((actor_Player.dx != 0) && xaligned)
         {                    
-            if (isBlockedGhostDoorOpen(screenx + pActor->dx, screeny ))
+            if (isBlockedGhostDoorOpen(screenx + actor_Player.dx, screeny ))
             {
                 // Stop and wait for the player to tell you what to do next
-                pActor->dx = 0;                
-                pActor->framedata = (char*)&animation_player_still;  
+                actor_Player.dx = 0;                
+                actor_Player.framedata = (char*)&animation_player_still;  
             }                                                          
         }
 
         // Make sure we didn't hit a wall in the Y direction
-        else if ((pActor->dy != 0) && yaligned)
+        else if ((actor_Player.dy != 0) && yaligned)
         {                        
-            if (isBlocked(screenx, screeny + pActor->dy ))
+            if (isBlocked(screenx, screeny + actor_Player.dy ))
             {
                 // Stop and wait for the player to tell you what to do next
-                pActor->dy = 0;
-                pActor->framedata = (char*)&animation_player_still;  
+                actor_Player.dy = 0;
+                actor_Player.framedata = (char*)&animation_player_still;  
             }                                                  
         }    
 
@@ -392,53 +392,53 @@ void moveActorPlayer(register struct actor *pActor)
             // Joystick left
             if (!(CIA1.pra & 4) && (!isBlocked(screenx - 1, screeny)))
             {
-                pActor->dy = 0;
-                pActor->dx = -1;
-                pActor->framedata = (char*)&animation_player_left;  
+                actor_Player.dy = 0;
+                actor_Player.dx = -1;
+                actor_Player.framedata = (char*)&animation_player_left;  
             }
             // Joystick right
             else if (!(CIA1.pra & 8) && (!isBlocked(screenx + 1, screeny)))
             {
-                pActor->dy = 0;
-                pActor->dx = 1;
-                pActor->framedata = (char*)&animation_player_right;  
+                actor_Player.dy = 0;
+                actor_Player.dx = 1;
+                actor_Player.framedata = (char*)&animation_player_right;  
             }
 
             // Joystick up
             else if (!(CIA1.pra & 1) && (!isBlocked(screenx, screeny - 1 )))
             {
-                pActor->dy = -1;
-                pActor->dx = 0;
-                pActor->framedata = (char*)&animation_player_up;  
+                actor_Player.dy = -1;
+                actor_Player.dx = 0;
+                actor_Player.framedata = (char*)&animation_player_up;  
             }
             // Joystick down
             else if (!(CIA1.pra & 2) && (!isBlocked(screenx, screeny + 1)))
             {
-                pActor->dy = 1;
-                pActor->dx = 0;
-                pActor->framedata = (char*)&animation_player_down;  
+                actor_Player.dy = 1;
+                actor_Player.dx = 0;
+                actor_Player.framedata = (char*)&animation_player_down;  
             }
         }
     }
     
-    if (pActor->moveDelay == 0) pActor->moveDelay = pActor->moveDelayMax;
+    if (actor_Player.moveDelay == 0) actor_Player.moveDelay = actor_Player.moveDelayMax;
 }
 
 // Did we eat a dot?
 // Did we eat a power pill?
 // Did we hit a ghost?
 // Did we eat fruit?
-void checkActorPlayer(register struct actor *pActor)
+void checkActorPlayer()
 {
     static unsigned char screenx;
     static unsigned char screeny;  
     static unsigned int address;
     
     // What are the screen coords?
-    screenx = spritexToscreenx (pActor->x);
-    screeny = spriteyToscreeny (pActor->y);    
+    screenx = spritexToscreenx (actor_Player.x);
+    screeny = spriteyToscreeny (actor_Player.y);    
     
-    if ((screenxTospritex(screenx) == pActor->x) && (screenyTospritey(screeny) == pActor->y))
+    if ((screenxTospritex(screenx) == actor_Player.x) && (screenyTospritey(screeny) == actor_Player.y))
     {
         address = screenxyToAddress(screenx, screeny);
         
@@ -467,7 +467,10 @@ void checkActorPlayer(register struct actor *pActor)
             playerDied = 1;
 
             // Hit scared ghost
-            
+            actor_Player.framedata = (char*)&animation_player_die;  
+            actor_Player.frames = PLAYER_DYING_FRAMES;
+            actor_Player.dx = 0;
+            actor_Player.dy = 0;            
         }
                         
         // Hit fruit (sprite 5)

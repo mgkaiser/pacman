@@ -17,6 +17,5 @@ extern unsigned long score2;
 extern unsigned int dotsRemaining;
 extern unsigned int pillsRemaining;
 extern unsigned char playerDied;
-extern unsigned char playerDying;
 
 #define SID_FILE_OFFSET 0x7E

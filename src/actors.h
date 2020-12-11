@@ -31,6 +31,9 @@ extern unsigned char animation_player_up[];
 extern unsigned char animation_player_left[];
 extern unsigned char animation_player_still[];
 
+#define PLAYER_DYING_FRAMES 36
+extern unsigned char animation_player_die[];
+
 extern struct actor actor_Ghost1;
 extern struct actor actor_Ghost2;
 extern struct actor actor_Ghost3;
@@ -39,8 +42,8 @@ extern struct actor actor_Player;
 
 extern void renderActor(register struct actor *Actor);
 extern void moveActorGhost(register struct actor *pActor);
-extern void moveActorPlayer(register struct actor *pActor);
-extern void checkActorPlayer(register struct actor *pActor);
+extern void moveActorPlayer();
+extern void checkActorPlayer();
 
 extern void draw_string_char(unsigned char x, unsigned char y, unsigned char ch);
 extern void draw_string(unsigned char x, unsigned char y, unsigned char w, char *ch);

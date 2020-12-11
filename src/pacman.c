@@ -45,7 +45,6 @@ unsigned long score2;
 unsigned int dotsRemaining;
 unsigned int pillsRemaining;
 unsigned char playerDied;
-unsigned char playerDying;
 char *stringTemp = "                 ";
 
 // Counter that increments every frame
@@ -95,10 +94,10 @@ unsigned char interrupt(void)
         }
         
         // See if the player did anything good
-        checkActorPlayer(&actor_Player);
+        checkActorPlayer();
         
         // Check for their next movement
-        moveActorPlayer(&actor_Player);
+        moveActorPlayer();
         moveActorGhost(&actor_Ghost1);
         moveActorGhost(&actor_Ghost2);
         moveActorGhost(&actor_Ghost3);
@@ -305,7 +304,9 @@ void initPlayer(void)
     actor_Player.y = 0xB7;   
     actor_Player.dx = 1;
     actor_Player.dy = 0;     
+    actor_Player.frames = PLAYER_FRAMES;
     actor_Player.framedata = (char*)&animation_player_still;
+    playerDied = 0;  
 }
 
 void showScore(void)
@@ -319,7 +320,7 @@ void showScore(void)
 
 void showDebug(void)
 {
-    /*
+    
     sprintf(stringTemp, "st %06d", scan_start);
     draw_string(29, 5, 12, stringTemp);    
     sprintf(stringTemp, "ad %06d", scan_afterdraw);
@@ -328,7 +329,7 @@ void showDebug(void)
     draw_string(29, 7, 12, stringTemp);    
     sprintf(stringTemp, "do %06d", scan_done);
     draw_string(29, 8, 12, stringTemp);       
-    */
+    
 
                     
     /*
@@ -412,8 +413,7 @@ void hideGameOver()
 }
 
 void resetLevel(unsigned char playTune)
-{
-            
+{                
     // Maybe play tune
     if (playTune == 1)
     {
@@ -438,17 +438,14 @@ void resetLevel(unsigned char playTune)
     initPlayer();
     pillsRemaining = 4;
     dotsRemaining = 218;    
+    playerDied = VIC.spr_coll;
+    playerDied = 0;
     
     // Unscare Ghosts
     showScore();
     
     // Wait a bit        
-    while(waitCounter != 0) {}        
-        
-    // Player is not dead
-    playerDied = VIC.spr_coll;      
-    playerDied = 0;
-    playerDying = 0;
+    while(waitCounter != 0) {}                      
 
     // Clear the ready message    
     hideReady();
@@ -493,7 +490,7 @@ int main (void)
         {
             waitCounter = 180;
             while(waitCounter != 0);
-            resetLevel(1);        
+            resetLevel(0);        
         }
         
         // Acknowledge the frame
