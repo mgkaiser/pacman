@@ -460,12 +460,21 @@ void checkActorPlayer(register struct actor *pActor)
             // Put Ghosts in scared mode
         }
 
-        // Hit scared ghost
+        // Hit ghost (sprite 0 - 3)
+        if ((VIC.spr_coll & 0x1f) >= 0x10) 
+        {
+            // Hit well ghost
+            playerDied = 1;
 
-        // Hit well ghost
-
-        // Hit fruit
-        
+            // Hit scared ghost
+            
+        }
+                        
+        // Hit fruit (sprite 5)
+        else if ((VIC.spr_coll & 0x30) >= 0x10) 
+        {                
+            VIC.bordercolor = COLOR_PURPLE;
+        }                
     }    
 }
 

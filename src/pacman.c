@@ -37,13 +37,15 @@ char *spriteData    = (char *)0xa000;
 // Pointer to the sprite slots
 char *spriteSlot    = (char *)0xbbf8;
 //
-char *musicData     =(char *)0x9c5f;
+char *musicData     =(char *)0xc000;
 
 // Score
 unsigned long score1;
 unsigned long score2;
 unsigned int dotsRemaining;
 unsigned int pillsRemaining;
+unsigned char playerDied;
+unsigned char playerDying;
 char *stringTemp = "                 ";
 
 // Counter that increments every frame
@@ -73,11 +75,7 @@ unsigned char interrupt(void)
     scan_afterdraw = VIC.rasterline;
 
     // Play tune                                   
-    //__asm__ ("jsr $9c7a");      
-    if ((interuptCounter & 0x01) == 1) {
-        __asm__ ("jsr $9c7a");                         
-    }
-    
+    __asm__ ("jsr $c003");          
     scan_aftermusic = VIC.rasterline;
     
     // Wait
@@ -144,10 +142,10 @@ void copyMusic(void)
     static unsigned int x;
     static unsigned int y;
 
-    for (x = 0, y = Pac_Man_sid_start; y < Pac_Man_sid_len ; ++x, ++y)
+    for (x = 0, y = Pac_Man_sid_start; y <= Pac_Man_sid_len ; ++x, ++y)
     {
         musicData[x] = Pac_Man_sid[y];        
-    }
+    }    
 }
 
 // Copy the screen data to the buffers
@@ -321,6 +319,7 @@ void showScore(void)
 
 void showDebug(void)
 {
+    /*
     sprintf(stringTemp, "st %06d", scan_start);
     draw_string(29, 5, 12, stringTemp);    
     sprintf(stringTemp, "ad %06d", scan_afterdraw);
@@ -328,8 +327,10 @@ void showDebug(void)
     sprintf(stringTemp, "am %06d", scan_aftermusic);
     draw_string(29, 7, 12, stringTemp);    
     sprintf(stringTemp, "do %06d", scan_done);
-    draw_string(29, 8, 12, stringTemp);        
+    draw_string(29, 8, 12, stringTemp);       
+    */
 
+                    
     /*
     sprintf(stringTemp, "g1 %06d", actor_Ghost1.moveDelay);
     draw_string(29, 10, 12, stringTemp);        
@@ -421,7 +422,7 @@ void resetLevel(unsigned char playTune)
         __asm__ ("lda #00");
         __asm__ ("tax");
         __asm__ ("tay");
-        __asm__ ("jsr $9c5f");        
+        __asm__ ("jsr $c000");        
         CLI();        
         waitCounter = 570; 
     }
@@ -438,12 +439,18 @@ void resetLevel(unsigned char playTune)
     initGhosts();    
     initPlayer();
     pillsRemaining = 4;
-    dotsRemaining = 218;
+    dotsRemaining = 218;    
+    
     // Unscare Ghosts
     showScore();
     
     // Wait a bit        
     while(waitCounter != 0) {}        
+    
+    // Player is not dead
+    playerDied = VIC.spr_coll;      
+    playerDied = 0;
+    playerDying = 0;
 
     // Clear the ready message    
     hideReady();
@@ -456,7 +463,7 @@ int main (void)
     copyChars();
     copySprites();
     copyMusic();
-
+    
     // Setup the video card
     initVic();    
 
@@ -478,6 +485,13 @@ int main (void)
 
         // Reset if the player ate everything
         if (pillsRemaining == 0 && dotsRemaining == 0) 
+        {
+            waitCounter = 180;
+            while(waitCounter != 0);
+            resetLevel(0);        
+        }
+
+        if (playerDied) 
         {
             waitCounter = 180;
             while(waitCounter != 0);
