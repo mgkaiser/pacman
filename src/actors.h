@@ -5,6 +5,7 @@ struct actor {
     unsigned char y;
     unsigned char dx;
     unsigned char dy;
+    unsigned char normalColor;
     unsigned char aggressivex;
     unsigned char aggressivey;
     unsigned char animationDelay;
@@ -16,6 +17,7 @@ struct actor {
     unsigned char ghostDoorOpen;              
     unsigned char suppressAggression;
     unsigned char *framedata;
+    unsigned char ghostScared;
 };
 
 #define GHOST_FRAMES 2

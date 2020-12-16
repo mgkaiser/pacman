@@ -10,6 +10,7 @@ unsigned char animation_ghost_left_up[]     = { 0x80, 0x84 };
 unsigned char animation_ghost_right_up[]    = { 0x81, 0x85 };
 unsigned char animation_ghost_left_down[]   = { 0x82, 0x86 };
 unsigned char animation_ghost_right_down[]  = { 0x83, 0x87 };
+unsigned char animation_ghost_scared[]      = { 0x91, 0x91 };
 
 // Describes the player animations
 unsigned char animation_player_right[]      = { 0x88, 0x89, 0x8a, 0x89 };
@@ -53,7 +54,7 @@ unsigned char screenyTospritey(unsigned char screeny)
 }
 
 // Return the offset in the screen "array" for the character at x, y
-unsigned int screenxyToAddress(unsigned char screenx, unsigned char screeny)
+unsigned int  screenxyToAddress(unsigned char screenx, unsigned char screeny)
 {
     return (screeny * 40) + screenx;
 }
@@ -83,7 +84,7 @@ unsigned char isBlockedGhostDoorOpen(unsigned char screenx, unsigned char screen
 }
 
 // Make the ghosts look at the player
-unsigned char *LookTowardPlayer(unsigned char x, unsigned char y)
+unsigned char*  LookTowardPlayer(unsigned char x, unsigned char y)
 {
     if (actor_Player.x < x)
     {
@@ -115,7 +116,7 @@ unsigned char *LookTowardPlayer(unsigned char x, unsigned char y)
 }
 
 // Take the data from the struct and actually draw the actor
-void renderActor(register struct actor *pActor)
+void  renderActor(register struct actor *pActor)
 {   
     static unsigned char spriteNumber;
     
@@ -133,7 +134,7 @@ void renderActor(register struct actor *pActor)
     }
 }
 
-void draw_string(unsigned char x, unsigned char y, unsigned char w, char *ch)
+void  draw_string(unsigned char x, unsigned char y, unsigned char w, char *ch)
 {
 	static unsigned char xctr;		
 			
@@ -159,7 +160,7 @@ void draw_string(unsigned char x, unsigned char y, unsigned char w, char *ch)
 	
 }
 
-void draw_string_char(unsigned char x, unsigned char y, unsigned char ch)
+void  draw_string_char(unsigned char x, unsigned char y, unsigned char ch)
 {
     sprintf(buf, "%d", ch);
     draw_string(x, y , 0x04, buf);
@@ -170,16 +171,31 @@ void moveActorGhost(register struct actor *pActor)
 {
     static unsigned char screenx;
     static unsigned char screeny;  
+    static unsigned char aggressivex;
+    static unsigned char aggressivey;
+
+    if (playerDied) return;
 
     if (pActor->ghostDoorOpen != 0) {
         pActor->ghostDoorOpen = pActor->ghostDoorOpen - 1;
         pActor->suppressAggression = 150;
     }
-    if (pActor->suppressAggression != 0) pActor->suppressAggression = pActor->suppressAggression - 1;
+    if (pActor->suppressAggression != 0) pActor->suppressAggression = pActor->suppressAggression - 1;    
         
     if (pActor->moveDelayMax == 255 || --(pActor -> moveDelay) != 1)
     {
         static unsigned char _isBlocked;
+
+        if (pActor->suppressAggression != 0 || pActor->ghostScared > 0)
+        {
+            aggressivex = 0;
+            aggressivey = 0;
+        }
+        else
+        {
+            aggressivex = pActor->aggressivex;
+            aggressivey = pActor->aggressivey;
+        }
   
         pActor->x += pActor->dx;
         pActor->y += pActor->dy;
@@ -200,7 +216,7 @@ void moveActorGhost(register struct actor *pActor)
                     pActor->dx = 0;                                                              
 
                     // The player is above us
-                    if ((pActor->aggressivey == 1  && actor_Player.y < pActor->y) || (pActor->aggressivey == 0 && actor_Player.y > pActor->y ))
+                    if ((aggressivey == 1  && actor_Player.y < pActor->y) || (aggressivey == 0 && actor_Player.y > pActor->y ))
                     {
                         // Go Up                    
                         if (!isBlocked(screenx, screeny - 1 ))
@@ -231,7 +247,7 @@ void moveActorGhost(register struct actor *pActor)
                 }  
                 else
                 {
-                    if (pActor->aggressivex && pActor->suppressAggression == 0)
+                    if (aggressivex)
                     {
                         // Look up and down to see if we can get closer to  player                
                         if (!isBlocked(screenx, screeny - 1) && actor_Player.y < pActor->y)
@@ -283,7 +299,7 @@ void moveActorGhost(register struct actor *pActor)
                     pActor->dy = 0;
 
                     // The player is to our left
-                    if ((pActor->aggressivex == 1  && actor_Player.x < pActor->x) || (pActor->aggressivex == 0 && actor_Player.x > pActor->x ))
+                    if ((aggressivex == 1  && actor_Player.x < pActor->x) || (aggressivex == 0 && actor_Player.x > pActor->x ))
                     {
                         // Go left                    
                         if (!isBlockedGhostDoorOpen(screenx - 1, screeny ))
@@ -314,7 +330,7 @@ void moveActorGhost(register struct actor *pActor)
                 }
                 else
                 {
-                    if (pActor->aggressivey && pActor->suppressAggression == 0)
+                    if (aggressivey)
                     {
                         // Look left and right to see if we can get closer to player                
                         if (!isBlockedGhostDoorOpen(screenx - 1, screeny) && actor_Player.x < pActor->x)
@@ -332,19 +348,50 @@ void moveActorGhost(register struct actor *pActor)
             }            
         }    
         
-        pActor->framedata = LookTowardPlayer(pActor->x, pActor-> y);
+        if (pActor->ghostScared > 0)
+        {
+            if (interruptCounter == 0){
+                --(pActor->ghostScared);                        
+            }
+
+            pActor->framedata = (char *)&animation_ghost_scared;
+
+            if (pActor->ghostScared >=3)
+            {
+                VIC.spr_color[pActor->spriteNumber] = COLOR_BLUE;                
+            }
+            else
+            {
+                if ((interruptCounter & 0x10) == 0x10)
+                {
+                    VIC.spr_color[pActor->spriteNumber] = COLOR_BLUE;                
+                }
+                else
+                {
+                    VIC.spr_color[pActor->spriteNumber] = COLOR_WHITE;                
+                }
+            }
+        }
+        else
+        {
+            pActor->framedata = LookTowardPlayer(pActor->x, pActor-> y);
+            VIC.spr_color[pActor->spriteNumber] = pActor->normalColor;            
+        }
+                
     }
     
     if (pActor->moveDelay == 0) pActor->moveDelay = pActor->moveDelayMax;
 }
 
 // Move the actor in the selected direction unless blocked
-void moveActorPlayer()
+void  moveActorPlayer()
 {
     static unsigned char screenx;
     static unsigned char screeny;  
     static unsigned char xaligned;
     static unsigned char yaligned;
+
+    if (playerDied) return;
         
     if (actor_Player.moveDelayMax == 255 || --(actor_Player. moveDelay) != 1)
     {
@@ -424,15 +471,37 @@ void moveActorPlayer()
     if (actor_Player.moveDelay == 0) actor_Player.moveDelay = actor_Player.moveDelayMax;
 }
 
+unsigned char validateHit(register struct actor *pActor)
+{
+    unsigned char ghostx;
+    unsigned char ghosty;
+    unsigned char playerx;
+    unsigned char playery;
+
+    const unsigned char grace = 8;
+
+    ghostx = pActor->x;
+    ghosty = pActor->y;
+    playerx = actor_Player.x;
+    playery = actor_Player.y;
+
+    if (playerx >= ghostx - grace && playerx <= ghostx + grace && playery >= ghosty - grace && playery <= ghosty + grace) return 1;
+
+    return 0;    
+}
+
+
 // Did we eat a dot?
 // Did we eat a power pill?
 // Did we hit a ghost?
 // Did we eat fruit?
-void checkActorPlayer()
+void  checkActorPlayer()
 {
     static unsigned char screenx;
     static unsigned char screeny;  
     static unsigned int address;
+    static unsigned char isDead;
+    static unsigned char spriteColl;
     
     // What are the screen coords?
     screenx = spritexToscreenx (actor_Player.x);
@@ -458,26 +527,82 @@ void checkActorPlayer()
             screenData[address] = 0x20;  
 
             // Put Ghosts in scared mode
+            actor_Ghost1.ghostScared = 10;
+            actor_Ghost2.ghostScared = 10;
+            actor_Ghost3.ghostScared = 10;
+            actor_Ghost4.ghostScared = 10;                        
         }
+    }
 
-        // Hit ghost (sprite 0 - 3)
-        if ((VIC.spr_coll & 0x1f) >= 0x10) 
+    // Hit ghost (sprite 0 - 3)
+    isDead = 0;
+    spriteColl = VIC.spr_coll;
+    hitRegister = spriteColl;
+                    
+    //if ((spriteColl & 0x11) == 0x11 && validateHit(&actor_Ghost1)) 
+    if (validateHit(&actor_Ghost1)) 
+    {
+        hitGhost1 = 1;
+        if (actor_Ghost1.ghostScared > 0)
         {
-            // Hit well ghost
-            playerDied = 1;
 
-            // Hit scared ghost
-            actor_Player.framedata = (char*)&animation_player_die;  
-            actor_Player.frames = PLAYER_DYING_FRAMES;
-            actor_Player.dx = 0;
-            actor_Player.dy = 0;            
         }
-                        
-        // Hit fruit (sprite 5)
-        else if ((VIC.spr_coll & 0x30) >= 0x10) 
-        {                
-            VIC.bordercolor = COLOR_PURPLE;
-        }                
-    }    
+        else
+        {
+            isDead = 1;            
+        }                        
+    }
+    if (validateHit(&actor_Ghost2)) 
+    {
+        hitGhost2 = 1;
+        if (actor_Ghost2.ghostScared > 0)
+        {
+            
+        }
+        else
+        {
+            isDead = 1;
+        }                        
+    }
+    if (validateHit(&actor_Ghost3)) 
+    {
+        hitGhost3 = 1;        
+        if (actor_Ghost3.ghostScared > 0)
+        {
+
+        }
+        else
+        {
+            isDead = 1;
+        }                        
+    }
+    if (validateHit(&actor_Ghost4)) 
+    {
+        hitGhost4 = 1;
+        if (actor_Ghost4.ghostScared > 0)
+        {
+            
+        }
+        else
+        {
+            isDead = 1;
+        }                        
+    }        
+
+    if (isDead) 
+    {
+        // Hit well ghost
+        playerDied = 1;            
+        actor_Player.framedata = (char*)&animation_player_die;  
+        actor_Player.frames = PLAYER_DYING_FRAMES;
+        actor_Player.dx = 0;
+        actor_Player.dy = 0;            
+    }
+                    
+    // Hit fruit (sprite 5)
+    else if ((VIC.spr_coll & 0x30) >= 0x10) 
+    {                
+        VIC.bordercolor = COLOR_PURPLE;
+    }                
 }
 

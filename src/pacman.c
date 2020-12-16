@@ -48,21 +48,28 @@ unsigned char playerDied;
 char *stringTemp = "                 ";
 
 // Counter that increments every frame
-unsigned char interuptCounter;
+unsigned char interruptCounter;
 unsigned char frameTrigger;
 unsigned int waitCounter;
 
-unsigned int scan_start;
-unsigned int scan_afterdraw;
-unsigned int scan_aftermusic;
-unsigned int scan_done;
+unsigned char scan_start;
+unsigned char scan_afterdraw;
+unsigned char scan_aftermusic;
+unsigned char scan_done;
+unsigned char hitGhost1;
+unsigned char hitGhost2;
+unsigned char hitGhost3;
+unsigned char hitGhost4;
+unsigned char hitRegister;
 
 // Interrupt handler called once per frame
 unsigned char interrupt(void)
 {   
     scan_start = VIC.rasterline;
 
-    ++interuptCounter;   
+    // Count from 0 to 59
+    ++interruptCounter;
+    if(interruptCounter >= 60) interruptCounter = 0;   
     
     // Draw the ghosts
     renderActor(&actor_Player);
@@ -120,7 +127,7 @@ void initInterrupt (void)
 {
     unsigned short dummy;     
 
-    interuptCounter = 0;    
+    interruptCounter = 0;    
     frameTrigger = 0;
     waitCounter = 0xffff; 
     
@@ -214,8 +221,8 @@ void initGhosts(void)
     VIC.spr_mcolor0 = COLOR_WHITE;
     VIC.spr_mcolor1 = COLOR_BLACK; 
   
-    // Ghost 1 (Red) Initial Postion, above the box    
-    VIC.spr0_color = COLOR_RED;
+    // Ghost 1 (Red) Initial Postion, above the box        
+    actor_Ghost1.normalColor = COLOR_RED;
     actor_Ghost1.spriteNumber = 0;
     actor_Ghost1.frames = GHOST_FRAMES;
     actor_Ghost1.frame = 0;    
@@ -230,11 +237,12 @@ void initGhosts(void)
     actor_Ghost1.dy = 0;     
     actor_Ghost1.aggressivex = 1;
     actor_Ghost1.aggressivey = 1;
+    actor_Ghost1.ghostScared = 0;
     actor_Ghost1.framedata = (char*)&animation_ghost_left_up;      
-    
+    VIC.spr0_color = actor_Ghost1.normalColor;
 
-    // Ghost 2 (Pink) Initial Postion, in the box
-    VIC.spr1_color = COLOR_LIGHTRED;
+    // Ghost 2 (Pink) Initial Postion, in the box    
+    actor_Ghost2.normalColor = COLOR_LIGHTRED;
     actor_Ghost2.spriteNumber = 1;
     actor_Ghost2.frames = GHOST_FRAMES;
     actor_Ghost2.frame = 0;    
@@ -249,10 +257,12 @@ void initGhosts(void)
     actor_Ghost2.dy = -1;     
     actor_Ghost2.aggressivex = 1;
     actor_Ghost2.aggressivey = 0;
-    actor_Ghost2.framedata = (char*)&animation_ghost_right_up;    
+    actor_Ghost2.ghostScared = 0;
+    actor_Ghost2.framedata = (char*)&animation_ghost_right_up; 
+    VIC.spr1_color = actor_Ghost2.normalColor;   
 
     // Ghost 3 (Orange) Initial Postion, in the box
-    VIC.spr2_color = COLOR_ORANGE;
+    actor_Ghost3.normalColor = COLOR_ORANGE;
     actor_Ghost3.spriteNumber = 2;
     actor_Ghost3.frames = GHOST_FRAMES;
     actor_Ghost3.frame = 0;    
@@ -267,10 +277,12 @@ void initGhosts(void)
     actor_Ghost3.dy = -1;     
     actor_Ghost3.aggressivex = 0;
     actor_Ghost3.aggressivey = 1;
+    actor_Ghost3.ghostScared = 0;
     actor_Ghost3.framedata = (char*)&animation_ghost_left_down;    
+    VIC.spr2_color = actor_Ghost3.normalColor;
 
     // Ghost 4 (Cyan) Initial Postion, in the box
-    VIC.spr3_color = COLOR_CYAN;
+    actor_Ghost4.normalColor = COLOR_CYAN;
     actor_Ghost4.spriteNumber = 3;
     actor_Ghost4.frames = GHOST_FRAMES;
     actor_Ghost4.frame = 0;    
@@ -285,7 +297,14 @@ void initGhosts(void)
     actor_Ghost4.dy = -1;     
     actor_Ghost4.aggressivex = 0;
     actor_Ghost4.aggressivey = 0;
+    actor_Ghost4.ghostScared = 0;
     actor_Ghost4.framedata = (char*)&animation_ghost_right_down;              
+    VIC.spr4_color = actor_Ghost4.normalColor;
+
+    hitGhost1 = 0;
+    hitGhost2 = 0;
+    hitGhost3 = 0;
+    hitGhost4 = 0;
 }
 
 // Set player to initial state
@@ -320,6 +339,7 @@ void showScore(void)
 
 void showDebug(void)
 {
+    return;
     
     sprintf(stringTemp, "st %06d", scan_start);
     draw_string(29, 5, 12, stringTemp);    
@@ -329,22 +349,20 @@ void showDebug(void)
     draw_string(29, 7, 12, stringTemp);    
     sprintf(stringTemp, "do %06d", scan_done);
     draw_string(29, 8, 12, stringTemp);       
-    
 
-                    
-    /*
-    sprintf(stringTemp, "g1 %06d", actor_Ghost1.moveDelay);
-    draw_string(29, 10, 12, stringTemp);        
-    sprintf(stringTemp, "g2 %06d", actor_Ghost2.moveDelay);
-    draw_string(29, 11, 12, stringTemp);        
-    sprintf(stringTemp, "g3 %06d", actor_Ghost3.moveDelay);
-    draw_string(29, 12, 12, stringTemp);        
-    sprintf(stringTemp, "g4 %06d", actor_Ghost4.moveDelay);
-    draw_string(29, 13, 12, stringTemp);        
-    sprintf(stringTemp, "p1 %06d", actor_Player.moveDelay);
-    draw_string(29, 14, 12, stringTemp);        
-    */
-    
+    sprintf(stringTemp, "gs %06d", actor_Ghost1.ghostScared);
+    draw_string(29, 10, 12, stringTemp);       
+
+    sprintf(stringTemp, "h1 %06d", hitGhost1);
+    draw_string(29, 12, 12, stringTemp);       
+    sprintf(stringTemp, "h2 %06d", hitGhost2);
+    draw_string(29, 13, 12, stringTemp);       
+    sprintf(stringTemp, "h3 %06d", hitGhost3);
+    draw_string(29, 14, 12, stringTemp);       
+    sprintf(stringTemp, "h4 %06d", hitGhost4);
+    draw_string(29, 15, 12, stringTemp);       
+    sprintf(stringTemp, "hr %06d", hitRegister);
+    draw_string(29, 16, 12, stringTemp);                                           
 }
 
 void showReady()
@@ -437,8 +455,7 @@ void resetLevel(unsigned char playTune)
     initGhosts();    
     initPlayer();
     pillsRemaining = 4;
-    dotsRemaining = 218;    
-    playerDied = VIC.spr_coll;
+    dotsRemaining = 218;        
     playerDied = 0;
     
     // Unscare Ghosts
@@ -489,7 +506,10 @@ int main (void)
         if (playerDied) 
         {
             waitCounter = 180;
-            while(waitCounter != 0);
+            while(waitCounter != 0)
+            {
+                showDebug();
+            }
             resetLevel(0);        
         }
         
