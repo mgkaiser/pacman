@@ -1,9 +1,11 @@
 #include <6502.h>
 #include <c64.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include "actors.h"
 #include "pacman.h"
+#include "graphlib.h"
+#include "musiclib.h"
+#include "sfx.h"
 
 // Describes the ghost animations
 unsigned char animation_ghost_left_up[]     = { 0x80, 0x84 };
@@ -27,44 +29,11 @@ struct actor actor_Ghost3;
 struct actor actor_Ghost4;
 struct actor actor_Player;
 
-char buf[20];
-
-// Convert sprite x coord to screen x coord
-unsigned char spritexToscreenx(unsigned char spritex)
-{
-    return (spritex - 21) / 8;
-}
-
-// Convert screen x coord to sprite x coord
-unsigned char screenxTospritex(unsigned char screenx)
-{
-    return (screenx * 8) + 21;
-}
-
-// Convert sprite y coord to screen y coord
-unsigned char spriteyToscreeny(unsigned char spritey)
-{
-    return (spritey - 47) / 8;
-}
-
-// Convert screen y coord to sprite y coord
-unsigned char screenyTospritey(unsigned char screeny)
-{
-    return (screeny * 8) + 47;
-}
-
-// Return the offset in the screen "array" for the character at x, y
-unsigned int  screenxyToAddress(unsigned char screenx, unsigned char screeny)
-{
-    return (screeny * 40) + screenx;
-}
-
 // Are we blocked at the specified coords
 unsigned char isBlocked(unsigned char screenx, unsigned char screeny)
 {
     unsigned char charToCheck;
-    charToCheck = screenData[screenxyToAddress(screenx, screeny)];        
-    //draw_string_char(30, 10, charToCheck);
+    charToCheck = screenData[screenxyToAddress(screenx, screeny)];            
     if (charToCheck == 0x2E) return 0;
     if (charToCheck == 0x51) return 0;
     if (charToCheck == 0x20) return 0;     
@@ -74,8 +43,7 @@ unsigned char isBlocked(unsigned char screenx, unsigned char screeny)
 unsigned char isBlockedGhostDoorOpen(unsigned char screenx, unsigned char screeny)
 {
     unsigned char charToCheck;
-    charToCheck = screenData[screenxyToAddress(screenx, screeny)];    
-    //draw_string_char(30, 10, charToCheck);
+    charToCheck = screenData[screenxyToAddress(screenx, screeny)];        
     if (charToCheck == 0x2E) return 0;
     if (charToCheck == 0x51) return 0;
     if (charToCheck == 0x20) return 0;
@@ -134,38 +102,6 @@ void  renderActor(register struct actor *pActor)
     }
 }
 
-void  draw_string(unsigned char x, unsigned char y, unsigned char w, char *ch)
-{
-	static unsigned char xctr;		
-			
-	char ch2;
-		
-	for(xctr = 0; xctr < w; ++xctr)
-	{	
-		ch2 = ch[xctr];
-        if (ch2 == 0x00) break;
-		
-		if (ch[xctr] <= 0x1f) ch2 = ch2 + 0x80;
-		if (ch[xctr] >= 0x20 & ch[xctr] <= 0x3f) ch2 = ch2 + 0x00;
-		if (ch[xctr] >= 0x40 & ch[xctr] <= 0x5f) ch2 = ch2 + 0xc0;
-		if (ch[xctr] >= 0x60 & ch[xctr] <= 0x7f) ch2 = ch2 + 0xe0;
-		if (ch[xctr] >= 0x80 & ch[xctr] <= 0x9f) ch2 = ch2 + 0x40;
-		if (ch[xctr] >= 0xa0 & ch[xctr] <= 0xbf) ch2 = ch2 + 0xc0;
-		if (ch[xctr] >= 0xc0 & ch[xctr] <= 0xdf) ch2 = ch2 + 0x80;
-		if (ch[xctr] >= 0xe0 & ch[xctr] <= 0xfe) ch2 = ch2 + 0x80;
-		if (ch[xctr] == 0xff) ch2 = 0x5e;
-		
-        screenData[screenxyToAddress(x + xctr,y)] = ch2;		
-	}
-	
-}
-
-void  draw_string_char(unsigned char x, unsigned char y, unsigned char ch)
-{
-    sprintf(buf, "%d", ch);
-    draw_string(x, y , 0x04, buf);
-}
-
 // Move the actor in the selected direction unless blocked
 void moveActorGhost(register struct actor *pActor)
 {
@@ -173,19 +109,19 @@ void moveActorGhost(register struct actor *pActor)
     static unsigned char screeny;  
     static unsigned char aggressivex;
     static unsigned char aggressivey;
+    static unsigned char _isBlocked;
 
     if (playerDied) return;
-
-    if (pActor->ghostDoorOpen != 0) {
-        pActor->ghostDoorOpen = pActor->ghostDoorOpen - 1;
-        pActor->suppressAggression = 150;
-    }
-    if (pActor->suppressAggression != 0) pActor->suppressAggression = pActor->suppressAggression - 1;    
-        
+               
     if (pActor->moveDelayMax == 255 || --(pActor -> moveDelay) != 1)
     {
-        static unsigned char _isBlocked;
-
+        if (pActor->ghostDoorOpen != 0) {
+            pActor->ghostDoorOpen = pActor->ghostDoorOpen - 1;
+            pActor->suppressAggression = 150;
+        }
+        
+        if (pActor->suppressAggression != 0) pActor->suppressAggression = pActor->suppressAggression - 1; 
+    
         if (pActor->suppressAggression != 0 || pActor->ghostScared > 0)
         {
             aggressivex = 0;
@@ -200,6 +136,7 @@ void moveActorGhost(register struct actor *pActor)
         pActor->x += pActor->dx;
         pActor->y += pActor->dy;
 
+        // Deal with the tunnel
         if (pActor->x < 21) pActor->x = 237;
         if (pActor->x > 237) pActor->x = 21;        
 
@@ -517,6 +454,7 @@ void  checkActorPlayer()
             score1 += 10;
             --dotsRemaining;
             screenData[address] = 0x20;   
+            //PLAY_SFX(sfx1_arp1, 14);   
         }
 
         // Eat a power pill
@@ -524,7 +462,9 @@ void  checkActorPlayer()
         {
             score1 += 100;
             --pillsRemaining;
-            screenData[address] = 0x20;  
+            screenData[address] = 0x20; 
+
+            ateAPill = 1; 
 
             // Put Ghosts in scared mode
             actor_Ghost1.ghostScared = 10;
@@ -537,15 +477,19 @@ void  checkActorPlayer()
     // Hit ghost (sprite 0 - 3)
     isDead = 0;
     spriteColl = VIC.spr_coll;
-    hitRegister = spriteColl;
+    #ifdef DEBUG    
+        hitRegister = spriteColl;
+    #endif
                     
     //if ((spriteColl & 0x11) == 0x11 && validateHit(&actor_Ghost1)) 
     if (validateHit(&actor_Ghost1)) 
     {
-        hitGhost1 = 1;
+        #ifdef DEBUG    
+            hitGhost1 = 1;
+        #endif
         if (actor_Ghost1.ghostScared > 0)
         {
-
+            
         }
         else
         {
@@ -554,7 +498,9 @@ void  checkActorPlayer()
     }
     if (validateHit(&actor_Ghost2)) 
     {
-        hitGhost2 = 1;
+        #ifdef DEBUG    
+            hitGhost1 = 2;
+        #endif
         if (actor_Ghost2.ghostScared > 0)
         {
             
@@ -566,7 +512,9 @@ void  checkActorPlayer()
     }
     if (validateHit(&actor_Ghost3)) 
     {
-        hitGhost3 = 1;        
+        #ifdef DEBUG    
+            hitGhost1 = 3;
+        #endif     
         if (actor_Ghost3.ghostScared > 0)
         {
 
@@ -578,7 +526,9 @@ void  checkActorPlayer()
     }
     if (validateHit(&actor_Ghost4)) 
     {
-        hitGhost4 = 1;
+        #ifdef DEBUG    
+            hitGhost4 = 1;
+        #endif
         if (actor_Ghost4.ghostScared > 0)
         {
             

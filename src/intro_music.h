@@ -1,2 +1,2 @@
-extern unsigned char pacman_sid[];
-extern unsigned int pacman_sid_len;
+extern unsigned char pacman_bin[];
+extern unsigned int pacman_bin_len;

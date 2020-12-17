@@ -46,6 +46,3 @@ extern void renderActor(register struct actor *Actor);
 extern void moveActorGhost(register struct actor *pActor);
 extern void moveActorPlayer();
 extern void checkActorPlayer();
-
-extern void draw_string_char(unsigned char x, unsigned char y, unsigned char ch);
-extern void draw_string(unsigned char x, unsigned char y, unsigned char w, char *ch);
