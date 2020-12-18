@@ -18,6 +18,7 @@ extern unsigned int pillsRemaining;
 extern unsigned char playerDied;
 extern unsigned char interruptCounter;
 extern unsigned char ateAPill;
+extern unsigned char ateADot;
 
 #ifdef DEBUG    
     extern unsigned char hitGhost1;

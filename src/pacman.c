@@ -43,6 +43,7 @@ unsigned char interruptCounter;
 unsigned char frameTrigger;
 unsigned int waitCounter;
 unsigned char ateAPill;
+unsigned char ateADot;
 
 // String buffer
 char stringTemp[20];
@@ -456,6 +457,15 @@ int main (void)
             if (ateAPill)
             {
                 ateAPill = 0;
+                #ifdef DEBUG
+                    ++(VIC.bordercolor);
+                #endif
+                PLAY_SFX(sfx1_arp2, 7);   
+            }
+
+            if (ateADot)
+            {
+                ateADot = 0;
                 #ifdef DEBUG
                     ++(VIC.bordercolor);
                 #endif

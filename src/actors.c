@@ -454,7 +454,7 @@ void  checkActorPlayer()
             score1 += 10;
             --dotsRemaining;
             screenData[address] = 0x20;   
-            //PLAY_SFX(sfx1_arp1, 14);   
+            ateADot = 1; 
         }
 
         // Eat a power pill
