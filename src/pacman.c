@@ -182,8 +182,8 @@ void initGhosts(void)
     VIC.spr_mcolor = 0x0f;
 
     // Set the 2nd and 3rd sprite colors white and black
-    VIC.spr_mcolor0 = COLOR_WHITE;
-    VIC.spr_mcolor1 = COLOR_BLACK; 
+    VIC.spr_mcolor1 = COLOR_WHITE;
+    VIC.spr_mcolor0 = COLOR_BLACK; 
   
     // Ghost 1 (Red) Initial Postion, above the box        
     actor_Ghost1.normalColor = COLOR_RED;
@@ -202,6 +202,7 @@ void initGhosts(void)
     actor_Ghost1.aggressivex = 1;
     actor_Ghost1.aggressivey = 1;
     actor_Ghost1.ghostScared = 0;
+    actor_Ghost1.ghostDead = 0;
     actor_Ghost1.framedata = (char*)&animation_ghost_left_up;      
     VIC.spr0_color = actor_Ghost1.normalColor;
 
@@ -222,6 +223,7 @@ void initGhosts(void)
     actor_Ghost2.aggressivex = 1;
     actor_Ghost2.aggressivey = 0;
     actor_Ghost2.ghostScared = 0;
+    actor_Ghost2.ghostDead = 0;
     actor_Ghost2.framedata = (char*)&animation_ghost_right_up; 
     VIC.spr1_color = actor_Ghost2.normalColor;   
 
@@ -242,6 +244,7 @@ void initGhosts(void)
     actor_Ghost3.aggressivex = 0;
     actor_Ghost3.aggressivey = 1;
     actor_Ghost3.ghostScared = 0;
+    actor_Ghost3.ghostDead = 0;
     actor_Ghost3.framedata = (char*)&animation_ghost_left_down;    
     VIC.spr2_color = actor_Ghost3.normalColor;
 
@@ -262,6 +265,7 @@ void initGhosts(void)
     actor_Ghost4.aggressivex = 0;
     actor_Ghost4.aggressivey = 0;
     actor_Ghost4.ghostScared = 0;
+    actor_Ghost4.ghostDead = 0;
     actor_Ghost4.framedata = (char*)&animation_ghost_right_down;              
     VIC.spr4_color = actor_Ghost4.normalColor;
 
@@ -469,7 +473,7 @@ int main (void)
                 #ifdef DEBUG
                     ++(VIC.bordercolor);
                 #endif
-                PLAY_SFX(sfx1_arp1, 14);   
+                //PLAY_SFX(sfx1_arp1, 14);   
             }
 
             // Reset if the player ate everything

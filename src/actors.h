@@ -18,6 +18,7 @@ struct actor {
     unsigned char suppressAggression;
     unsigned char *framedata;
     unsigned char ghostScared;
+    unsigned char ghostDead;    
 };
 
 #define GHOST_FRAMES 2
