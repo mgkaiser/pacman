@@ -14,6 +14,10 @@ unsigned char animation_ghost_left_down[]   = { 0x82, 0x86 };
 unsigned char animation_ghost_right_down[]  = { 0x83, 0x87 };
 unsigned char animation_ghost_scared[]      = { 0x91, 0x91 };
 unsigned char animation_ghost_dead[]        = { 0x96, 0x96 };
+unsigned char animation_ghost_1600[]        = { 0x95, 0x95 };
+unsigned char animation_ghost_800[]         = { 0x94, 0x94 };
+unsigned char animation_ghost_400[]         = { 0x93, 0x93 };
+unsigned char animation_ghost_200[]         = { 0x92, 0x92 };
 
 // Describes the player animations
 unsigned char animation_player_right[]      = { 0x88, 0x89, 0x8a, 0x89 };
@@ -94,6 +98,15 @@ void  renderActor(register struct actor *pActor)
     VIC.spr_pos[spriteNumber].x = pActor->x;
     VIC.spr_pos[spriteNumber].y = pActor->y;
 
+    if (pActor->multicolor)
+    {
+        VIC.spr_mcolor = (VIC.spr_mcolor) | (pActor->positiveMask);        
+    }
+    else
+    {
+        VIC.spr_mcolor = (VIC.spr_mcolor) & (pActor->negativeMask);
+    }
+
     if (pActor->animationDelay-- == 0)
     {
         spriteSlot[spriteNumber] = *(pActor->framedata + pActor->frame);              
@@ -127,8 +140,8 @@ void moveActorGhost(register struct actor *pActor)
     
         if (pActor->ghostDead)
         {
-            aggressivex = 0;
-            aggressivey = 0;
+            aggressivex = 1;
+            aggressivey = 1;
         }
         else if (pActor->suppressAggression != 0 || pActor->ghostScared > 0)
         {
@@ -145,13 +158,17 @@ void moveActorGhost(register struct actor *pActor)
         {
             targetx = 0x81;
             targety = 0x57;
+            if (pActor->x == targetx && pActor->y == targety)
+            {
+                pActor->ghostDead = 0;
+            }
         }
         else
         {
             targetx = actor_Player.x;
             targety = actor_Player.y;
         }
-  
+          
         pActor->x += pActor->dx;
         pActor->y += pActor->dy;
 
@@ -302,43 +319,54 @@ void moveActorGhost(register struct actor *pActor)
                     }                 
                 }            
             }            
-        }    
-        
-        if (pActor->ghostDead > 0)
-        {
-            pActor->framedata = (char *)&animation_ghost_dead;
-        }
-        else if (pActor->ghostScared > 0)
-        {
-            if (interruptCounter == 0){
-                --(pActor->ghostScared);                        
-            }
+        }   
+    }
 
+    if (pActor->ghostDead > 1)                                      
+    {
+        --(pActor->ghostDead);    
+        if (nextGhostScore == 200) pActor->framedata = (char *)&animation_ghost_200;
+        if (nextGhostScore == 400) pActor->framedata = (char *)&animation_ghost_400;
+        if (nextGhostScore == 800) pActor->framedata = (char *)&animation_ghost_800;
+        if (nextGhostScore == 1600) pActor->framedata = (char *)&animation_ghost_1600;
+        VIC.spr_color[pActor->spriteNumber] = COLOR_WHITE;
+        pActor->multicolor = 0;
+    } 
+    else if (pActor->ghostDead > 0)
+    {                                       
+        pActor->multicolor = 1;
+        pActor->framedata = (char *)&animation_ghost_dead;            
+    }
+    else if (pActor->ghostScared > 0)
+    {
+        pActor->multicolor = 1;
+        if (interruptCounter == 0){
+            --(pActor->ghostScared);                        
+        }                        
+        if (pActor->ghostScared >=3)
+        {
+            VIC.spr_color[pActor->spriteNumber] = COLOR_BLUE;                
             pActor->framedata = (char *)&animation_ghost_scared;
-
-            if (pActor->ghostScared >=3)
+        }
+        else
+        {
+            pActor->framedata = (char *)&animation_ghost_scared;
+            if ((interruptCounter & 0x10) == 0x10)
             {
                 VIC.spr_color[pActor->spriteNumber] = COLOR_BLUE;                
             }
             else
             {
-                if ((interruptCounter & 0x10) == 0x10)
-                {
-                    VIC.spr_color[pActor->spriteNumber] = COLOR_BLUE;                
-                }
-                else
-                {
-                    VIC.spr_color[pActor->spriteNumber] = COLOR_WHITE;                
-                }
+                VIC.spr_color[pActor->spriteNumber] = COLOR_WHITE;                
             }
         }
-        else
-        {
-            pActor->framedata = LookTowardPlayer(pActor->x, pActor-> y);
-            VIC.spr_color[pActor->spriteNumber] = pActor->normalColor;            
-        }
-                
     }
+    else
+    {
+        pActor->framedata = LookTowardPlayer(pActor->x, pActor-> y);
+        VIC.spr_color[pActor->spriteNumber] = pActor->normalColor;
+        pActor->multicolor = 1;
+    }                    
     
     if (pActor->moveDelay == 0) pActor->moveDelay = pActor->moveDelayMax;
 }
@@ -450,7 +478,6 @@ unsigned char validateHit(register struct actor *pActor)
     return 0;    
 }
 
-
 // Did we eat a dot?
 // Did we eat a power pill?
 // Did we hit a ghost?
@@ -486,14 +513,15 @@ void  checkActorPlayer()
             score1 += 100;
             --pillsRemaining;
             screenData[address] = 0x20; 
-
-            ateAPill = 1; 
+            
+            score1 += nextGhostScore;
+            nextGhostScore = 100;
 
             // Put Ghosts in scared mode
-            actor_Ghost1.ghostScared = 10;
-            actor_Ghost2.ghostScared = 10;
-            actor_Ghost3.ghostScared = 10;
-            actor_Ghost4.ghostScared = 10;                        
+            actor_Ghost1.ghostScared = MAX_GHOST_SCARED;
+            actor_Ghost2.ghostScared = MAX_GHOST_SCARED;
+            actor_Ghost3.ghostScared = MAX_GHOST_SCARED;
+            actor_Ghost4.ghostScared = MAX_GHOST_SCARED;                        
         }
     }
 
@@ -517,7 +545,9 @@ void  checkActorPlayer()
         else if (actor_Ghost1.ghostScared > 0)
         {
             actor_Ghost1.ghostScared = 0;
-            actor_Ghost1.ghostDead = 1;
+            actor_Ghost1.ghostDead = 60;
+            nextGhostScore *= 2;
+            score1 += nextGhostScore;            
         }
         else
         {
@@ -536,7 +566,9 @@ void  checkActorPlayer()
         else if (actor_Ghost2.ghostScared > 0)
         {
             actor_Ghost2.ghostScared = 0;
-            actor_Ghost2.ghostDead = 1;
+            actor_Ghost2.ghostDead = 60;
+            nextGhostScore *= 2;
+            score1 += nextGhostScore;            
         }
         else
         {
@@ -555,7 +587,9 @@ void  checkActorPlayer()
         else if (actor_Ghost3.ghostScared > 0)
         {
             actor_Ghost3.ghostScared = 0;
-            actor_Ghost3.ghostDead = 1;
+            actor_Ghost3.ghostDead = 60;
+            nextGhostScore *= 2;
+            score1 += nextGhostScore;            
         }
         else
         {
@@ -569,12 +603,14 @@ void  checkActorPlayer()
         #endif
         if (actor_Ghost4.ghostDead)
         {
-
+            
         }
         else if (actor_Ghost4.ghostScared > 0)
         {
             actor_Ghost4.ghostScared = 0;
-            actor_Ghost4.ghostDead = 1;
+            actor_Ghost4.ghostDead = 60;
+            nextGhostScore *= 2;
+            score1 += nextGhostScore;            
         }
         else
         {

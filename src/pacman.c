@@ -30,6 +30,7 @@ unsigned char stackSize[STACK_SIZE];
 // Score
 unsigned long score1;
 unsigned long score2;
+unsigned int nextGhostScore;
 
 // Game status
 unsigned int dotsRemaining;
@@ -177,10 +178,7 @@ void initGhosts(void)
 {
     // Enable sprites
     VIC.spr_ena = 0xff;
-  
-    //Sprites 0-3 multicolor, 4-7 high resolution
-    VIC.spr_mcolor = 0x0f;
-
+      
     // Set the 2nd and 3rd sprite colors white and black
     VIC.spr_mcolor1 = COLOR_WHITE;
     VIC.spr_mcolor0 = COLOR_BLACK; 
@@ -202,7 +200,10 @@ void initGhosts(void)
     actor_Ghost1.aggressivex = 1;
     actor_Ghost1.aggressivey = 1;
     actor_Ghost1.ghostScared = 0;
-    actor_Ghost1.ghostDead = 0;
+    actor_Ghost1.ghostDead = 0;    
+    actor_Ghost1.positiveMask = 0x01;
+    actor_Ghost1.negativeMask = 0xff - 0x01;
+    actor_Ghost1.multicolor = 1;
     actor_Ghost1.framedata = (char*)&animation_ghost_left_up;      
     VIC.spr0_color = actor_Ghost1.normalColor;
 
@@ -224,6 +225,9 @@ void initGhosts(void)
     actor_Ghost2.aggressivey = 0;
     actor_Ghost2.ghostScared = 0;
     actor_Ghost2.ghostDead = 0;
+    actor_Ghost2.positiveMask = 0x02;
+    actor_Ghost2.negativeMask = 0xff - 0x02;    
+    actor_Ghost2.multicolor = 1;
     actor_Ghost2.framedata = (char*)&animation_ghost_right_up; 
     VIC.spr1_color = actor_Ghost2.normalColor;   
 
@@ -245,6 +249,9 @@ void initGhosts(void)
     actor_Ghost3.aggressivey = 1;
     actor_Ghost3.ghostScared = 0;
     actor_Ghost3.ghostDead = 0;
+    actor_Ghost3.positiveMask = 0x04;
+    actor_Ghost3.negativeMask = 0xff - 0x04;
+    actor_Ghost3.multicolor = 1;
     actor_Ghost3.framedata = (char*)&animation_ghost_left_down;    
     VIC.spr2_color = actor_Ghost3.normalColor;
 
@@ -266,6 +273,9 @@ void initGhosts(void)
     actor_Ghost4.aggressivey = 0;
     actor_Ghost4.ghostScared = 0;
     actor_Ghost4.ghostDead = 0;
+    actor_Ghost4.positiveMask = 0x08;
+    actor_Ghost4.negativeMask = 0xff - 0x08;
+    actor_Ghost4.multicolor = 1;
     actor_Ghost4.framedata = (char*)&animation_ghost_right_down;              
     VIC.spr4_color = actor_Ghost4.normalColor;
 
@@ -294,6 +304,9 @@ void initPlayer(void)
     actor_Player.dx = 1;
     actor_Player.dy = 0;     
     actor_Player.frames = PLAYER_FRAMES;
+    actor_Player.positiveMask = 0x10;
+    actor_Player.negativeMask = 0xff - 0x08;
+    actor_Player.multicolor = 0;
     actor_Player.framedata = (char*)&animation_player_still;
     playerDied = 0;  
 }

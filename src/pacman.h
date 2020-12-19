@@ -13,6 +13,7 @@ extern unsigned char animation_player_still[];
 
 extern unsigned long score1;
 extern unsigned long score2;
+extern unsigned int nextGhostScore;
 extern unsigned int dotsRemaining;
 extern unsigned int pillsRemaining;
 extern unsigned char playerDied;

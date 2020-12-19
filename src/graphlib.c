@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <cc65.h>
 #include <c64.h>
+#include "graphlib.h"
 
 // First sprite page in our sprite data
 #define SPRITE_BASE 0x80
@@ -16,34 +17,34 @@ char *spriteSlot    = (char *)0xbbf8;
 char buf[20];
 
 // Convert sprite x coord to screen x coord
-unsigned char spritexToscreenx(unsigned char spritex)
-{
-    return (spritex - 21) / 8;
-}
+//unsigned char spritexToscreenx(unsigned char spritex)
+//{
+//    return (spritex - 21) / 8;
+//}
 
 // Convert screen x coord to sprite x coord
-unsigned char screenxTospritex(unsigned char screenx)
-{
-    return (screenx * 8) + 21;
-}
+//unsigned char screenxTospritex(unsigned char screenx)
+//{
+//    return (screenx * 8) + 21;
+//}
 
 // Convert sprite y coord to screen y coord
-unsigned char spriteyToscreeny(unsigned char spritey)
-{
-    return (spritey - 47) / 8;
-}
+//unsigned char spriteyToscreeny(unsigned char spritey)
+//{
+//    return (spritey - 47) / 8;
+//}
 
 // Convert screen y coord to sprite y coord
-unsigned char screenyTospritey(unsigned char screeny)
-{
-    return (screeny * 8) + 47;
-}
+//unsigned char screenyTospritey(unsigned char screeny)
+//{
+//    return (screeny * 8) + 47;
+//}
 
 // Return the offset in the screen "array" for the character at x, y
-unsigned int  screenxyToAddress(unsigned char screenx, unsigned char screeny)
-{
-    return (screeny * 40) + screenx;
-}
+//unsigned int  screenxyToAddress(unsigned char screenx, unsigned char screeny)
+//{
+//    return (screeny * 40) + screenx;
+//}
 
 // Copy the screen data to the buffers
 void copyScreen(unsigned int screenDataLen, char* scrnData, char* colData)

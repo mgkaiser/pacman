@@ -18,8 +18,13 @@ struct actor {
     unsigned char suppressAggression;
     unsigned char *framedata;
     unsigned char ghostScared;
-    unsigned char ghostDead;    
+    unsigned char ghostDead; 
+    unsigned char negativeMask;
+    unsigned char positiveMask;
+    unsigned char multicolor;   
 };
+
+#define MAX_GHOST_SCARED 10
 
 #define GHOST_FRAMES 2
 extern unsigned char animation_ghost_left_up[];
