@@ -18,8 +18,9 @@ extern unsigned int dotsRemaining;
 extern unsigned int pillsRemaining;
 extern unsigned char playerDied;
 extern unsigned char interruptCounter;
-extern unsigned char ateAPill;
-extern unsigned char ateADot;
+extern unsigned char *nextSound1;
+extern unsigned char *nextSound2;
+extern unsigned char *nextSound3;
 
 #ifdef DEBUG    
     extern unsigned char hitGhost1;

@@ -9,8 +9,8 @@
 
 #define PLAY_SFX(s, c) (            \
         __asm__ ("sei"),            \
-        __asm__ ("lda #<%v", s),    \
-        __asm__ ("ldy #>%v", s),    \
+        __asm__ ("lda %v", s),      \
+        __asm__ ("ldy %v + 1", s),  \
         __asm__ ("ldx #%b", c),     \
         __asm__ ("jsr $c006"),      \
         __asm__ ("cli"))

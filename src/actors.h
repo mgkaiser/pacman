@@ -19,6 +19,7 @@ struct actor {
     unsigned char *framedata;
     unsigned char ghostScared;
     unsigned char ghostDead; 
+    unsigned int nextGhostScore;
     unsigned char negativeMask;
     unsigned char positiveMask;
     unsigned char multicolor;   

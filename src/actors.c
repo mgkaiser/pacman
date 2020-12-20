@@ -325,10 +325,10 @@ void moveActorGhost(register struct actor *pActor)
     if (pActor->ghostDead > 1)                                      
     {
         --(pActor->ghostDead);    
-        if (nextGhostScore == 200) pActor->framedata = (char *)&animation_ghost_200;
-        if (nextGhostScore == 400) pActor->framedata = (char *)&animation_ghost_400;
-        if (nextGhostScore == 800) pActor->framedata = (char *)&animation_ghost_800;
-        if (nextGhostScore == 1600) pActor->framedata = (char *)&animation_ghost_1600;
+        if (pActor->nextGhostScore == 200) pActor->framedata = (char *)&animation_ghost_200;
+        if (pActor->nextGhostScore == 400) pActor->framedata = (char *)&animation_ghost_400;
+        if (pActor->nextGhostScore == 800) pActor->framedata = (char *)&animation_ghost_800;
+        if (pActor->nextGhostScore == 1600) pActor->framedata = (char *)&animation_ghost_1600;
         VIC.spr_color[pActor->spriteNumber] = COLOR_WHITE;
         pActor->multicolor = 0;
     } 
@@ -504,12 +504,14 @@ void  checkActorPlayer()
             score1 += 10;
             --dotsRemaining;
             screenData[address] = 0x20;   
-            ateADot = 1; 
+            nextSound1 = (char*)&sfx1_eatDot;
         }
 
         // Eat a power pill
         if (screenData[address] == 0x51)
         {
+            nextSound2 = (char*)&sfx1_eatPill;
+
             score1 += 100;
             --pillsRemaining;
             screenData[address] = 0x20; 
@@ -547,7 +549,9 @@ void  checkActorPlayer()
             actor_Ghost1.ghostScared = 0;
             actor_Ghost1.ghostDead = 60;
             nextGhostScore *= 2;
-            score1 += nextGhostScore;            
+            actor_Ghost1.nextGhostScore = nextGhostScore;
+            score1 += nextGhostScore;  
+            nextSound2 = (char*)&sfx1_ghostDie;          
         }
         else
         {
@@ -568,7 +572,9 @@ void  checkActorPlayer()
             actor_Ghost2.ghostScared = 0;
             actor_Ghost2.ghostDead = 60;
             nextGhostScore *= 2;
+            actor_Ghost2.nextGhostScore = nextGhostScore;
             score1 += nextGhostScore;            
+            nextSound2 = (char*)&sfx1_ghostDie;          
         }
         else
         {
@@ -589,7 +595,9 @@ void  checkActorPlayer()
             actor_Ghost3.ghostScared = 0;
             actor_Ghost3.ghostDead = 60;
             nextGhostScore *= 2;
+            actor_Ghost3.nextGhostScore = nextGhostScore;
             score1 += nextGhostScore;            
+            nextSound2 = (char*)&sfx1_ghostDie;          
         }
         else
         {
@@ -610,7 +618,9 @@ void  checkActorPlayer()
             actor_Ghost4.ghostScared = 0;
             actor_Ghost4.ghostDead = 60;
             nextGhostScore *= 2;
+            actor_Ghost4.nextGhostScore = nextGhostScore;
             score1 += nextGhostScore;            
+            nextSound2 = (char*)&sfx1_ghostDie;          
         }
         else
         {

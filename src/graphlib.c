@@ -16,35 +16,8 @@ char *spriteSlot    = (char *)0xbbf8;
 
 char buf[20];
 
-// Convert sprite x coord to screen x coord
-//unsigned char spritexToscreenx(unsigned char spritex)
-//{
-//    return (spritex - 21) / 8;
-//}
-
-// Convert screen x coord to sprite x coord
-//unsigned char screenxTospritex(unsigned char screenx)
-//{
-//    return (screenx * 8) + 21;
-//}
-
-// Convert sprite y coord to screen y coord
-//unsigned char spriteyToscreeny(unsigned char spritey)
-//{
-//    return (spritey - 47) / 8;
-//}
-
-// Convert screen y coord to sprite y coord
-//unsigned char screenyTospritey(unsigned char screeny)
-//{
-//    return (screeny * 8) + 47;
-//}
-
-// Return the offset in the screen "array" for the character at x, y
-//unsigned int  screenxyToAddress(unsigned char screenx, unsigned char screeny)
-//{
-//    return (screeny * 40) + screenx;
-//}
+unsigned int times40[] = {0x0,0x28,0x50,0x78,0xA0,0xC8,0xF0,0x118,0x140,0x168,0x190,0x1B8,0x1E0,0x208,0x230,0x258,0x280,0x2A8,0x2D0,0x2F8,0x320,0x348,0x370,0x398,0x3C0};
+unsigned int times8[] = {0x0,0x8,0x10,0x18,0x20,0x28,0x30,0x38,0x40,0x48,0x50,0x58,0x60,0x68,0x70,0x78,0x80,0x88,0x90,0x98,0xA0,0xA8,0xB0,0xB8,0xC0,0xC8,0xD0,0xD8,0xE0,0xE8,0xF0,0xF8,0x100,0x108,0x110,0x118,0x120,0x128,0x130,0x138,0x140};
 
 // Copy the screen data to the buffers
 void copyScreen(unsigned int screenDataLen, char* scrnData, char* colData)

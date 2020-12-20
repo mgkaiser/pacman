@@ -43,8 +43,9 @@ unsigned char playerDied;
 unsigned char interruptCounter;
 unsigned char frameTrigger;
 unsigned int waitCounter;
-unsigned char ateAPill;
-unsigned char ateADot;
+unsigned char *nextSound1;
+unsigned char *nextSound2;
+unsigned char *nextSound3;
 
 // String buffer
 char stringTemp[20];
@@ -316,8 +317,8 @@ void showScore(void)
     sprintf(stringTemp, "1up %06lu", score1);
     draw_string(29, 1, 12, stringTemp);
 
-    sprintf(stringTemp, "2up %06lu", score2);
-    draw_string(29, 3, 12, stringTemp);    
+    //sprintf(stringTemp, "2up %06lu", score2);
+    //draw_string(29, 3, 12, stringTemp);    
 }
 
 #ifdef DEBUG
@@ -471,22 +472,20 @@ int main (void)
         // Wait for the frame to trigger 
         while(frameTrigger == 0)
         {
-            if (ateAPill)
-            {
-                ateAPill = 0;
-                #ifdef DEBUG
-                    ++(VIC.bordercolor);
-                #endif
-                PLAY_SFX(sfx1_arp2, 7);   
+            if (nextSound1 != 0)
+            {                                            
+                PLAY_SFX(nextSound1, 0);                   
+                nextSound1 = 0;
             }
-
-            if (ateADot)
-            {
-                ateADot = 0;
-                #ifdef DEBUG
-                    ++(VIC.bordercolor);
-                #endif
-                //PLAY_SFX(sfx1_arp1, 14);   
+            if (nextSound2 != 0)
+            {                                      
+                PLAY_SFX(nextSound2, 7);                   
+                nextSound2 = 0;
+            }
+            if (nextSound3 != 0)
+            {                                
+                PLAY_SFX(nextSound3, 14);                   
+                nextSound3 = 0;
             }
 
             // Reset if the player ate everything
@@ -507,7 +506,9 @@ int main (void)
                 #ifdef DEBUG
                     ++(VIC.bordercolor);
                 #endif
-                PLAY_SFX(sfx1_gun, 14);   
+                nextSound3 = sfx1_playerDie;     
+                PLAY_SFX(nextSound3, 14);  
+                nextSound3 = 0;
                 
                 // Wait a bit for the pacman to die
                 waitCounter = 180;
