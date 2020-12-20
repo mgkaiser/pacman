@@ -160,6 +160,11 @@ void moveActorGhost(register struct actor *pActor)
             targety = 0x57;
             if (pActor->x == targetx && pActor->y == targety)
             {
+                pActor->ghostDoorOpen = 240;
+                pActor->x = 0x89;
+                pActor->y = 0x87;   
+                pActor->dx = 0;
+                pActor->dy = -1;     
                 pActor->ghostDead = 0;
             }
         }
