@@ -373,7 +373,16 @@ void moveActorGhost(register struct actor *pActor)
         pActor->multicolor = 1;
     }                    
     
-    if (pActor->moveDelay == 0) pActor->moveDelay = pActor->moveDelayMax;
+    if (pActor->moveDelay == 0) {
+        if (pActor->ghostScared)
+        {
+            pActor->moveDelay = (pActor->moveDelayMax / 4);
+        }
+        else
+        {        
+            pActor->moveDelay = pActor->moveDelayMax;
+        }
+    }
 }
 
 // Move the actor in the selected direction unless blocked

@@ -19,6 +19,8 @@
 #include "maze_tiles.h"
 #include "maze_char.h"
 #include "maze_colors.h"
+#include "title_char.h"
+#include "title_colors.h"
 #include "pacman_sprites.h"
 #include "sfx.h"
 
@@ -30,7 +32,12 @@ unsigned char stackSize[STACK_SIZE];
 // Score
 unsigned long score1;
 unsigned long score2;
+unsigned char numPacmen1;
+unsigned char numPacmen2;
 unsigned int nextGhostScore;
+unsigned char currrentScreen;
+#define SCREEN_TITLE 0
+#define SCREEN_GAME 1
 
 // Game status
 unsigned int dotsRemaining;
@@ -73,50 +80,58 @@ unsigned char interrupt(void)
     // Count from 0 to 59
     ++interruptCounter;
     if(interruptCounter >= 60) interruptCounter = 0;   
+
+    if (currrentScreen == SCREEN_TITLE)
+    {
+
+    }
     
-    // Draw the ghosts
-    renderActor(&actor_Player);
-    renderActor(&actor_Ghost1);
-    renderActor(&actor_Ghost2);
-    renderActor(&actor_Ghost3);
-    renderActor(&actor_Ghost4);   
+    if (currrentScreen == SCREEN_GAME)
+    {
+        // Draw the ghosts
+        renderActor(&actor_Player);
+        renderActor(&actor_Ghost1);
+        renderActor(&actor_Ghost2);
+        renderActor(&actor_Ghost3);
+        renderActor(&actor_Ghost4);   
 
-    #ifdef DEBUG
-        scan_afterdraw = VIC.rasterline;
-    #endif
+        #ifdef DEBUG
+            scan_afterdraw = VIC.rasterline;
+        #endif
 
-    // Play tune                                   
-    PLAY_MUSIC();      
+        // Play tune                                   
+        PLAY_MUSIC();      
 
-    #ifdef DEBUG
-        scan_aftermusic = VIC.rasterline;
-    #endif
-    
-    // Wait
-    if (waitCounter != 0)
-    {               
-        --waitCounter;
-    }   
+        #ifdef DEBUG
+            scan_aftermusic = VIC.rasterline;
+        #endif
+        
+        // Wait
+        if (waitCounter != 0)
+        {               
+            --waitCounter;
+        }   
 
-    // Normal loop
-    else
-    {   
-        // If all the dot are gone, stop and wait!       
-        if (pillsRemaining == 0 && dotsRemaining == 0) 
-        {
-            waitCounter = 0xffff;
-            actor_Player.framedata = (char*)&animation_player_still;
+        // Normal loop
+        else
+        {   
+            // If all the dot are gone, stop and wait!       
+            if (pillsRemaining == 0 && dotsRemaining == 0) 
+            {
+                waitCounter = 0xffff;
+                actor_Player.framedata = (char*)&animation_player_still;
+            }
+            
+            // See if the player did anything good
+            checkActorPlayer();
+            
+            // Check for their next movement
+            moveActorPlayer();
+            moveActorGhost(&actor_Ghost1);
+            moveActorGhost(&actor_Ghost2);
+            moveActorGhost(&actor_Ghost3);
+            moveActorGhost(&actor_Ghost4);                           
         }
-        
-        // See if the player did anything good
-        checkActorPlayer();
-        
-        // Check for their next movement
-        moveActorPlayer();
-        moveActorGhost(&actor_Ghost1);
-        moveActorGhost(&actor_Ghost2);
-        moveActorGhost(&actor_Ghost3);
-        moveActorGhost(&actor_Ghost4);                           
     }
 
     // Acknowlege the interrrupt 
@@ -176,10 +191,7 @@ void initVic(void)
 
 // Set ghosts to initial state
 void initGhosts(void)
-{
-    // Enable sprites
-    VIC.spr_ena = 0xff;
-      
+{          
     // Set the 2nd and 3rd sprite colors white and black
     VIC.spr_mcolor1 = COLOR_WHITE;
     VIC.spr_mcolor0 = COLOR_BLACK; 
@@ -316,9 +328,8 @@ void showScore(void)
 {
     sprintf(stringTemp, "1up %06lu", score1);
     draw_string(29, 1, 12, stringTemp);
-
-    //sprintf(stringTemp, "2up %06lu", score2);
-    //draw_string(29, 3, 12, stringTemp);    
+    sprintf(stringTemp, "lives %d", numPacmen1);
+    draw_string(29, 2, 12, stringTemp);    
 }
 
 #ifdef DEBUG
@@ -370,14 +381,14 @@ void showReady()
     VIC.spr6_color = COLOR_YELLOW;
     
     // Enable sprites
-    VIC.spr_ena = 0x7f;
+    VIC.spr_ena = VIC.spr_ena | 0x60;
 
 }
 
 void hideReady()
 {
     // Disable sprites
-    VIC.spr_ena = 0x1f;
+    VIC.spr_ena = VIC.spr_ena & (0xff - 0x60);
 }
 
 void showGameOver()
@@ -404,14 +415,34 @@ void showGameOver()
     VIC.spr6_color = COLOR_YELLOW;
     VIC.spr7_color = COLOR_YELLOW;
     
-    // Enable sprites
-    VIC.spr_ena = 0xff;     
+    // Enable sprites    
+    VIC.spr_ena = VIC.spr_ena | 0xe0;
 }
 
 void hideGameOver()
 {
     // Disable sprites
-    VIC.spr_ena = 0x1f;
+    VIC.spr_ena = VIC.spr_ena & (0xff - 0xe0);
+}
+
+void showPlayer()
+{
+    VIC.spr_ena = VIC.spr_ena | 0x10;
+}
+
+void hidePlayer()
+{
+    VIC.spr_ena = VIC.spr_ena & (0xff - 0x10);
+}
+
+void showGhosts()
+{
+    VIC.spr_ena = VIC.spr_ena | 0x0f;
+}
+
+void hideGhosts()
+{
+    VIC.spr_ena = VIC.spr_ena & (0xff - 0x0f);
 }
 
 void resetLevel(unsigned char playTune, unsigned char resetScreen)
@@ -429,7 +460,9 @@ void resetLevel(unsigned char playTune, unsigned char resetScreen)
     }            
 
     // Display Ready Message  
-    showReady();      
+    showReady();     
+    showPlayer();
+    showGhosts(); 
 
     // Reset the game state
     if (resetScreen) {
@@ -463,79 +496,107 @@ int main (void)
     // Kick off the interrupt    
     initInterrupt();    
 
-    // Reset level, music, new dots
-    resetLevel(1, 1);    
-        
-    // Wait forever - Read joystick, move player.
     while(1)
     {
-        // Wait for the frame to trigger 
-        while(frameTrigger == 0)
-        {
-            if (nextSound1 != 0)
-            {                                            
-                PLAY_SFX(nextSound1, 0);                   
-                nextSound1 = 0;
-            }
-            if (nextSound2 != 0)
-            {                                      
-                PLAY_SFX(nextSound2, 7);                   
-                nextSound2 = 0;
-            }
-            if (nextSound3 != 0)
-            {                                
-                PLAY_SFX(nextSound3, 14);                   
-                nextSound3 = 0;
-            }
+        currrentScreen = SCREEN_TITLE;
+        copyScreen(title_char_bin_len, title_char_bin, title_colors_bin);        
 
-            // Reset if the player ate everything
-            if (pillsRemaining == 0 && dotsRemaining == 0) 
-            {
-                
-                // Wait a bit
-                waitCounter = 120;
-                while(waitCounter != 0);
-                
-                // Reset level, no music, new dots
-                resetLevel(0, 1);        
-            }
+        while((CIA1.pra & 16)){}
+        //while (interruptCounter <= 50) {}
+
+        // Reset level, music, new dots
+        currrentScreen = SCREEN_GAME;
+        numPacmen1 = 3;        
+        resetLevel(1, 1);            
             
-            // Deal with the player dying
-            if (playerDied) 
+        // Continue until out of lives
+        while(numPacmen1 > 0)
+        {
+            // Wait for the frame to trigger 
+            while(frameTrigger == 0)
             {
-                #ifdef DEBUG
-                    ++(VIC.bordercolor);
-                #endif
-                nextSound3 = sfx1_playerDie;     
-                PLAY_SFX(nextSound3, 14);  
-                nextSound3 = 0;
-                
-                // Wait a bit for the pacman to die
-                waitCounter = 180;
-                while(waitCounter != 0)
-                {
-                    #ifdef DEBUG
-                        showDebug();
-                    #endif
+                if (nextSound1 != 0)
+                {                                            
+                    PLAY_SFX(nextSound1, 0);                   
+                    nextSound1 = 0;
+                }
+                if (nextSound2 != 0)
+                {                                      
+                    PLAY_SFX(nextSound2, 7);                   
+                    nextSound2 = 0;
+                }
+                if (nextSound3 != 0)
+                {                                
+                    PLAY_SFX(nextSound3, 14);                   
+                    nextSound3 = 0;
                 }
 
-                // Restart the level, no music, don't reset dots
-                resetLevel(0, 0);        
+                // Reset if the player ate everything
+                if (pillsRemaining == 0 && dotsRemaining == 0) 
+                {
+                    
+                    // Wait a bit
+                    waitCounter = 120;
+                    while(waitCounter != 0);
+                    
+                    // Reset level, no music, new dots
+                    resetLevel(0, 1);        
+                }
+                
+                // Deal with the player dying
+                if (playerDied) 
+                {
+                    #ifdef DEBUG
+                        ++(VIC.bordercolor);
+                    #endif
+                    nextSound3 = sfx1_playerDie;     
+                    PLAY_SFX(nextSound3, 14);  
+                    nextSound3 = 0;
+                    
+                    // Wait a bit for the pacman to die
+                    waitCounter = 180;
+                    while(waitCounter != 0)
+                    {
+                        #ifdef DEBUG
+                            showDebug();
+                        #endif
+                    }
+                    
+                    // Restart the level, no music, don't reset dots
+                    if (--numPacmen1 > 0)
+                    {
+                        resetLevel(0, 0);        
+                    }
+                    else
+                    {
+                        // Show game over
+                        hidePlayer();
+                        hideGhosts();
+                        showGameOver();
+                        waitCounter = 180;
+                        while(waitCounter != 0)
+                        {
+                            #ifdef DEBUG
+                                showDebug();
+                            #endif
+                        }
+                        hideGameOver();
+                    }                    
+                }
             }
+
+            // Show the score 
+            showScore();
+
+            // Show debug
+            #ifdef DEBUG
+                showDebug();
+            #endif
+
+                        
+            // Acknowledge the frame
+            frameTrigger = 0;
         }
-
-        // Show the score 
-        showScore();
-
-        // Show debug
-        #ifdef DEBUG
-            showDebug();
-        #endif
-
-        
-        
-        // Acknowledge the frame
-        frameTrigger = 0;
     }
 
     return EXIT_SUCCESS;        
