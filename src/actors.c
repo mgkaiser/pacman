@@ -35,7 +35,7 @@ struct actor actor_Ghost4;
 struct actor actor_Player;
 
 // Are we blocked at the specified coords
-unsigned char isBlocked(unsigned char screenx, unsigned char screeny)
+unsigned char fastcall isBlocked(unsigned char screenx, unsigned char screeny)
 {
     static unsigned char charToCheck;
     charToCheck = screenData[screenxyToAddress(screenx, screeny)];            
@@ -45,7 +45,7 @@ unsigned char isBlocked(unsigned char screenx, unsigned char screeny)
     return 1;
 }
 
-unsigned char isBlockedGhostDoorOpen(unsigned char screenx, unsigned char screeny)
+unsigned char fastcall isBlockedGhostDoorOpen(unsigned char screenx, unsigned char screeny)
 {
     static unsigned char charToCheck;
     charToCheck = screenData[screenxyToAddress(screenx, screeny)];        
@@ -57,7 +57,7 @@ unsigned char isBlockedGhostDoorOpen(unsigned char screenx, unsigned char screen
 }
 
 // Make the ghosts look at the player
-unsigned char* LookTowardPlayer(unsigned char x, unsigned char y)
+unsigned char* fastcall LookTowardPlayer(unsigned char x, unsigned char y)
 {
     if (actor_Player.x < x)
     {
@@ -89,7 +89,7 @@ unsigned char* LookTowardPlayer(unsigned char x, unsigned char y)
 }
 
 // Take the data from the struct and actually draw the actor
-void renderActor(register struct actor *pActor)
+void fastcall renderActor(register struct actor *pActor)
 {   
     static unsigned char spriteNumber;
     
@@ -117,7 +117,7 @@ void renderActor(register struct actor *pActor)
 }
 
 // Move the actor in the selected direction unless blocked
-void moveActorGhost(register struct actor *pActor)
+void fastcall moveActorGhost(register struct actor *pActor)
 {
     static unsigned char screenx;
     static unsigned char screeny;  
@@ -386,7 +386,7 @@ void moveActorGhost(register struct actor *pActor)
 }
 
 // Move the actor in the selected direction unless blocked
-void moveActorPlayer()
+void fastcall moveActorPlayer()
 {
     static unsigned char screenx;
     static unsigned char screeny;  
@@ -489,7 +489,7 @@ unsigned char validateHit(register struct actor *pActor)
     return (playerx >= ghostx - GRACE && playerx <= ghostx + GRACE && playery >= ghosty - GRACE && playery <= ghosty + GRACE);    
 }
 
-void checkActorPlayer()
+void fastcall checkActorPlayer()
 {
     static unsigned char screenx;
     static unsigned char screeny;  
