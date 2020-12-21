@@ -37,7 +37,7 @@ struct actor actor_Player;
 // Are we blocked at the specified coords
 unsigned char isBlocked(unsigned char screenx, unsigned char screeny)
 {
-    unsigned char charToCheck;
+    static unsigned char charToCheck;
     charToCheck = screenData[screenxyToAddress(screenx, screeny)];            
     if (charToCheck == 0x2E) return 0;
     if (charToCheck == 0x51) return 0;
@@ -47,7 +47,7 @@ unsigned char isBlocked(unsigned char screenx, unsigned char screeny)
 
 unsigned char isBlockedGhostDoorOpen(unsigned char screenx, unsigned char screeny)
 {
-    unsigned char charToCheck;
+    static unsigned char charToCheck;
     charToCheck = screenData[screenxyToAddress(screenx, screeny)];        
     if (charToCheck == 0x2E) return 0;
     if (charToCheck == 0x51) return 0;
@@ -57,7 +57,7 @@ unsigned char isBlockedGhostDoorOpen(unsigned char screenx, unsigned char screen
 }
 
 // Make the ghosts look at the player
-unsigned char*  LookTowardPlayer(unsigned char x, unsigned char y)
+unsigned char* LookTowardPlayer(unsigned char x, unsigned char y)
 {
     if (actor_Player.x < x)
     {
@@ -89,7 +89,7 @@ unsigned char*  LookTowardPlayer(unsigned char x, unsigned char y)
 }
 
 // Take the data from the struct and actually draw the actor
-void  renderActor(register struct actor *pActor)
+void renderActor(register struct actor *pActor)
 {   
     static unsigned char spriteNumber;
     
@@ -110,7 +110,7 @@ void  renderActor(register struct actor *pActor)
     if (pActor->animationDelay-- == 0)
     {
         spriteSlot[spriteNumber] = *(pActor->framedata + pActor->frame);              
-        pActor->frame++;
+        ++(pActor->frame);
         if (pActor->frame >= pActor->frames) pActor->frame = 0;
         pActor->animationDelay = pActor->animationDelayMax;
     }
@@ -123,7 +123,7 @@ void moveActorGhost(register struct actor *pActor)
     static unsigned char screeny;  
     static unsigned char aggressivex;
     static unsigned char aggressivey;
-    static unsigned char _isBlocked;
+    static unsigned char isBlocked;
     static unsigned char targetx;
     static unsigned char targety;
 
@@ -136,7 +136,7 @@ void moveActorGhost(register struct actor *pActor)
             pActor->suppressAggression = 150;
         }
         
-        if (pActor->suppressAggression != 0) pActor->suppressAggression = pActor->suppressAggression - 1; 
+        if (pActor->suppressAggression != 0) --(pActor->suppressAggression); 
     
         if (pActor->ghostDead)
         {
@@ -187,8 +187,8 @@ void moveActorGhost(register struct actor *pActor)
             screeny = spriteyToscreeny (pActor->y);
             if (screenxTospritex(screenx) == pActor->x)
             {
-                _isBlocked = isBlockedGhostDoorOpen(screenx + pActor->dx, screeny );                
-                if (_isBlocked)
+                isBlocked = isBlockedGhostDoorOpen(screenx + pActor->dx, screeny );                
+                if (isBlocked)
                 {
                     // Stop X motion
                     pActor->dx = 0;                                                              
@@ -258,20 +258,20 @@ void moveActorGhost(register struct actor *pActor)
                 {
                     if (pActor->dy == 0xff)
                     {                           
-                        _isBlocked = isBlockedGhostDoorOpen(screenx, screeny + pActor->dy );                        
+                        isBlocked = isBlockedGhostDoorOpen(screenx, screeny + pActor->dy );                        
                     }
                     else
                     {                        
-                        _isBlocked = isBlocked(screenx, screeny + pActor->dy );
+                        isBlocked = isBlocked(screenx, screeny + pActor->dy );
                     }
                     
                 }
                 else
                 {                    
-                    _isBlocked = isBlocked(screenx, screeny + pActor->dy );                    
+                    isBlocked = isBlocked(screenx, screeny + pActor->dy );                    
                 }                            
 
-                if (_isBlocked)
+                if (isBlocked)
                 {
                     // Stop Y motion
                     pActor->dy = 0;
@@ -386,7 +386,7 @@ void moveActorGhost(register struct actor *pActor)
 }
 
 // Move the actor in the selected direction unless blocked
-void  moveActorPlayer()
+void moveActorPlayer()
 {
     static unsigned char screenx;
     static unsigned char screeny;  
@@ -473,30 +473,23 @@ void  moveActorPlayer()
     if (actor_Player.moveDelay == 0) actor_Player.moveDelay = actor_Player.moveDelayMax;
 }
 
+#define GRACE 8
 unsigned char validateHit(register struct actor *pActor)
 {
-    unsigned char ghostx;
-    unsigned char ghosty;
-    unsigned char playerx;
-    unsigned char playery;
-
-    const unsigned char grace = 8;
-
+    static unsigned char ghostx;
+    static unsigned char ghosty;
+    static unsigned char playerx;
+    static unsigned char playery;
+    
     ghostx = pActor->x;
     ghosty = pActor->y;
     playerx = actor_Player.x;
     playery = actor_Player.y;
-
-    if (playerx >= ghostx - grace && playerx <= ghostx + grace && playery >= ghosty - grace && playery <= ghosty + grace) return 1;
-
-    return 0;    
+    
+    return (playerx >= ghostx - GRACE && playerx <= ghostx + GRACE && playery >= ghosty - GRACE && playery <= ghosty + GRACE);    
 }
 
-// Did we eat a dot?
-// Did we eat a power pill?
-// Did we hit a ghost?
-// Did we eat fruit?
-void  checkActorPlayer()
+void checkActorPlayer()
 {
     static unsigned char screenx;
     static unsigned char screeny;  
