@@ -123,7 +123,7 @@ void moveActorGhost(register struct actor *pActor)
     static unsigned char screeny;  
     static unsigned char aggressivex;
     static unsigned char aggressivey;
-    static unsigned char isBlocked;
+    static unsigned char isItBlocked;
     static unsigned char targetx;
     static unsigned char targety;
 
@@ -187,8 +187,8 @@ void moveActorGhost(register struct actor *pActor)
             screeny = spriteyToscreeny (pActor->y);
             if (screenxTospritex(screenx) == pActor->x)
             {
-                isBlocked = isBlockedGhostDoorOpen(screenx + pActor->dx, screeny );                
-                if (isBlocked)
+                isItBlocked = isBlockedGhostDoorOpen(screenx + pActor->dx, screeny );                
+                if (isItBlocked)
                 {
                     // Stop X motion
                     pActor->dx = 0;                                                              
@@ -258,20 +258,20 @@ void moveActorGhost(register struct actor *pActor)
                 {
                     if (pActor->dy == 0xff)
                     {                           
-                        isBlocked = isBlockedGhostDoorOpen(screenx, screeny + pActor->dy );                        
+                        isItBlocked = isBlockedGhostDoorOpen(screenx, screeny + pActor->dy );                        
                     }
                     else
                     {                        
-                        isBlocked = isBlocked(screenx, screeny + pActor->dy );
+                        isItBlocked = isBlocked(screenx, screeny + pActor->dy );
                     }
                     
                 }
                 else
                 {                    
-                    isBlocked = isBlocked(screenx, screeny + pActor->dy );                    
+                    isItBlocked = isBlocked(screenx, screeny + pActor->dy );                    
                 }                            
 
-                if (isBlocked)
+                if (isItBlocked)
                 {
                     // Stop Y motion
                     pActor->dy = 0;
