@@ -363,7 +363,7 @@ endef # D64_WRITE_SEQ_recipe
 
 disk: $(PROGRAM)    
 	@$(C1541) -format samples,AA d64 $(DISKNAME)
-	@$(C1541) -attach $(DISKNAME) -write "$(subst ?,$(SPACE),$(PROGRAM))" $(notdir $(PROGRAM)),p 
+	@$(C1541) -attach $(DISKNAME) -write "$(subst ?,$(SPACE),$(PROGRAM))" $(notdir $(PROGRAM)),p   
 
 # $(foreach file,$(EXELIST),$(D64_WRITE_PRG_recipe))
 # $(foreach file,$(OVERLAYLIST),$(D64_WRITE_PRG_recipe))
